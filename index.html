@@ -4,8 +4,62 @@
 	<script src="https://d3js.org/d3.v4.min.js"></script>
 	<script src="https://d3js.org/d3-color.v1.min.js"></script>
 	<script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+	<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
 </head>
 
 <body>
- <h1>Heat bulbs</h1>
+	<h1>Heat bulbs</h1>
+
+
+	<script>
+		var margin = {top: 40, right: 40, bottom: 50, left: 40},
+				width = 500 - margin.left - margin.right,
+				height = 500 - margin.top - margin.bottom;
+
+		// Grille
+    var grid = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      	.attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
+      	.attr("class", "grid");
+
+    // Echelle de couleur pour les temperatures (juste pour le début, pour visualiser l'évolution des températures sans notion de record)
+		var color = d3.scaleSequential().interpolator(d3.interpolateTurbo)
+		color.domain([-50, 50])
+
+		// Charger le fichier : il faudrait qu'on puisse charger différents fichiers et laisser l'utilisateur choisir s'il veut des villes ou des pays
+    d3.csv("GlobalLandTemperaturesByCountry.csv", function(data) {
+
+    	// Parse le temps : 1985-10-23
+    	var parse = d3.timeParse("%Y-%m-%d");
+
+    	data.forEach(d => {
+    		d.dt = parse(d.dt)
+    	})
+
+    	// nest pour formater les données
+	    var dataPerCountry = d3.nest()
+	    	.key(d => d.Country)
+	    	.entries(data)
+
+    	console.log(dataPerCountry)
+
+    	// Création de la grille
+    	var n = Math.ceil(Math.sqrt(dataPerCountry.length));	// Nombre de colonnes
+    	var square_length = Math.floor(width / n);	// longueur d'un côté d'un carré de la grille
+
+    	grid.selectAll("rect")
+    		.data(dataPerCountry)
+    		.enter()
+    		.append("rect")
+    			.attr("width", square_length)
+    			.attr("height", square_length)
+    			.attr("x", (d, i) => square_length * (i % n))
+    			.attr("y", (d, i) => square_length * Math.floor(i / n))
+    			.attr("stroke", "grey")
+    			.attr("fill", d => color(Number(d.values[0].AverageTemperature)))
+    })
+	</script>
+
 </body>
