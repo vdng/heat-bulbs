@@ -54,14 +54,36 @@
             .entries(data)
 
 
+        var maxsTab = new Array(dataPerCountry.length);
+        var va_allumer = new Array(dataPerCountry.length);
+        for (let i = 0; i < dataPerCountry.length; i++){ maxsTab[i] = 0; va_allumer[i] = {"key" : dataPerCountry[i].key, "value" : false}}
 
+        var nbAnnees = dataPerCountryPerYear[0].values.length;
+        console.log(nbAnnees);
+
+
+        
         setInterval(function(){
             grid.selectAll("rect")
                 .transition()
                 .duration(25)
-                .attr("fill", d => color(Number(d.values[anneeCourante].value)))
+                .attr("fill", d => {
+                    if (va_allumer[d.key]){return color(Number(d.values[anneeCourante % nbAnnees].value))} else {return color(0)}})
                 ;
             anneeCourante++;
+
+
+            for (let i = 0; i < dataPerCountry.length; i++){
+
+                if (maxsTab[i] < dataPerCountryPerYear[i].values[anneeCourante % nbAnnees].value){
+                    //console.log(dataPerCountryPerYear[i].key, " ",dataPerCountryPerYear[i].values[anneeCourante % nbAnnees].value, maxsTab[i] );
+                    maxsTab[i] = dataPerCountryPerYear[i].values[anneeCourante % nbAnnees].value;
+                    va_allumer[i] = true;
+                }
+                else {
+                    va_allumer[i] = false;
+                }
+            }
 
             console.log("Coucou");
         }, 300)
@@ -76,8 +98,6 @@
     	var square_length = Math.floor(width / n);	// longueur d'un côté d'un carré de la grille
 
     	
-        var maxsTab = new Array(dataPerCountry.length);
-        for (let i = 0; i < dataPerCountry.length; i++){ maxsTab[i] = 0}
 
         console.log(maxsTab);
 
