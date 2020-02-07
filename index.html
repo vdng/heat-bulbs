@@ -28,12 +28,14 @@
 		var color = d3.scaleSequential().interpolator(d3.interpolateTurbo)
 		color.domain([-50, 50])
 
+
+
 		// Charger le fichier : il faudrait qu'on puisse charger différents fichiers et laisser l'utilisateur choisir s'il veut des villes ou des pays
-    d3.csv("GlobalLandTemperaturesByCountry.csv", function(data) {
+    d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLandTemperaturesByCountry.csv", function(data) {
 
     	// Parse le temps : 1985-10-23
     	var parse = d3.timeParse("%Y-%m-%d");
-
+        var anneeCourante = 0;
     	data.forEach(d => {
     		d.dt = parse(d.dt)
     	})
@@ -43,22 +45,53 @@
 	    	.key(d => d.Country)
 	    	.entries(data)
 
-    	console.log(dataPerCountry)
+        // TODO : Mettre NULL si pas de donnée 
+        //Nest pour formater les données : regroupées par pays et par pays (et on a la moyenne de l'année)
+        var dataPerCountryPerYear = d3.nest()
+            .key(d => d.Country)
+            .key(d => d.dt.getFullYear())
+            .rollup(d => {return d3.mean(d, function(e){ return e.AverageTemperature;}) })
+            .entries(data)
+
+
+
+        setInterval(function(){
+            grid.selectAll("rect")
+                .transition()
+                .duration(25)
+                .attr("fill", d => color(Number(d.values[anneeCourante].value)))
+                ;
+            anneeCourante++;
+
+            console.log("Coucou");
+        }, 300)
+
+
+
+        console.log(dataPerCountry)
+    	console.log(dataPerCountryPerYear)
 
     	// Création de la grille
     	var n = Math.ceil(Math.sqrt(dataPerCountry.length));	// Nombre de colonnes
     	var square_length = Math.floor(width / n);	// longueur d'un côté d'un carré de la grille
 
-    	grid.selectAll("rect")
-    		.data(dataPerCountry)
+    	
+        var maxsTab = new Array(dataPerCountry.length);
+        for (let i = 0; i < dataPerCountry.length; i++){ maxsTab[i] = 0}
+
+        console.log(maxsTab);
+
+
+        grid.selectAll("rect")
+    		.data(dataPerCountryPerYear)
     		.enter()
     		.append("rect")
     			.attr("width", square_length)
     			.attr("height", square_length)
     			.attr("x", (d, i) => square_length * (i % n))
     			.attr("y", (d, i) => square_length * Math.floor(i / n))
-    			.attr("stroke", "grey")
-    			.attr("fill", d => color(Number(d.values[0].AverageTemperature)))
+    			.attr("stroke", "grey")  
+    			.attr("fill", d => color(Number(d.values[0].value))) //d correspond à un pays, d.values[0] correspond à la première année de ce pays, et value correspond à la température moyenne de cette année
     })
 	</script>
 
