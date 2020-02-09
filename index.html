@@ -46,7 +46,8 @@
 	    	.entries(data)
 
         // TODO : Mettre NULL si pas de donnée 
-        //Nest pour formater les données : regroupées par pays et par pays (et on a la moyenne de l'année)
+        // TODO éventuellement : dynamique sur pas que les années mais aussi par saison ou autre période
+        //Nest pour formater les données : regroupées par pays et par année (et on a la moyenne de l'année)
         var dataPerCountryPerYear = d3.nest()
             .key(d => d.Country)
             .key(d => d.dt.getFullYear())
@@ -55,73 +56,53 @@
 
 
 
+        // On enregistre pour chaque pays le maximum courant, ainsi que l'information si on va allumer l'ampoule ou pas (pour pouvoir calculer en amont)
+        var maxsTab = {};
 
-        var maxTabs = {};
-        //maxTabs['poulet'] = {"value1" : 2, "value2" : 3.4};
-        //console.log("Test : ",maxTabs['poulet'].value1)
-/*
-        var maxsTab = new Array(dataPerCountry.length);
-        var va_allumer = new Array(dataPerCountry.length);
-        for (let i = 0; i < dataPerCountry.length; i++){ maxsTab[i] = 0; va_allumer[i] = {"key" : dataPerCountry[i].key, "value" : false}}
-*/
-
-		for (let i = 0; i < dataPerCountry.length; i++){maxTabs[dataPerCountry[i].key] = {"currentMax": dataPerCountryPerYear[i].values[0].value, "vaAllumer": false, "indice" : i}};
-		console.log("maxtab : ", maxTabs);		
+		for (let i = 0; i < dataPerCountry.length; i++){maxsTab[dataPerCountry[i].key] = {"currentMax": dataPerCountryPerYear[i].values[0].value, "vaAllumer": false, "indice" : i}};
+		//console.log("maxsTab : ", maxsTab);		
 
 
         var nbAnnees = dataPerCountryPerYear[0].values.length;
-        console.log(nbAnnees);
-
 
         
+        //Modification de l'affichage de la grille à chaque frame
         setInterval(function(){
             grid.selectAll("rect")
                 .transition()
                 .duration(25)
                 .attr("fill", d => {
-                    if (maxTabs[d.key].vaAllumer){//console.log("Key : ", d.key, va_allumer[d.key]);
-                     return color(Number(d.values[anneeCourante % nbAnnees].value)) } else {//console.log("Key : ", d.key, va_allumer[d.key]); 
-                     return color(0)}})
+                	// Allumage ou pas de la case
+                    if (maxsTab[d.key].vaAllumer){
+                     	return color(Number(d.values[anneeCourante % nbAnnees].value)) } 
+                    else {
+                    	return d3.color('white')
+                 	}
+             })
                 ;
             anneeCourante++;
 
 
 
-
-            for (var pays in maxTabs){
-            	//console.log("Pays : ", maxTabs[pays]);
-            	var i = maxTabs[pays].indice;
-            	if (maxTabs[pays].currentMax < dataPerCountryPerYear[i].values[anneeCourante % nbAnnees].value){
-            		maxTabs[pays].currentMax = dataPerCountryPerYear[i].values[anneeCourante % nbAnnees].value;
-            		maxTabs[pays].vaAllumer = true;
+            // Parcours des pays pour voir si on dépasse le max
+            // Pour le moment, pas ouf : les premières frames affichent beaucoup d'ampoules allumées. C'est normal, il y a beaucoup de chances de casser son record quand on n'a peu de données : il faudrait pas commencer de la première année mais de la n-ème années en initialisant le max au max des 50 premières années
+            //Bug à partir de 60 ans : trouver pourquoi
+            for (var pays in maxsTab){
+            	var i = maxsTab[pays].indice;
+            	if (maxsTab[pays].currentMax < dataPerCountryPerYear[i].values[anneeCourante % nbAnnees].value){ //Si on dépasse le max
+            		maxsTab[pays].currentMax = dataPerCountryPerYear[i].values[anneeCourante % nbAnnees].value;
+            		maxsTab[pays].vaAllumer = true; // Conseil donné par Théo (pas moi, le doctorant) : faire le calcul du booléen maintenant et pas sur le moment de l'affichage
             	}
             	else{
-            		maxTabs[pays].vaAllumer = false;	
+            		maxsTab[pays].vaAllumer = false;	
             	}
             }
 
 
-            /*for (let i = 0; i < dataPerCountry.length; i++){
-
-                if (maxsTab[i] < dataPerCountryPerYear[i].values[anneeCourante % nbAnnees].value){
-                    //console.log(dataPerCountryPerYear[i].key, " ",dataPerCountryPerYear[i].values[anneeCourante % nbAnnees].value, maxsTab[i] );
-                    maxsTab[i] = dataPerCountryPerYear[i].values[anneeCourante % nbAnnees].value;
-                    va_allumer[i].value = true;
-                }
-                else {
-                    va_allumer[i].value = false;
-                }
-
-            }*/
-
-            //console.log("Va allumer : ",va_allumer);
-            //console.log("Coucou");
-        }, 1000)
+        }, 1000) // Durée d'affichage de chaque année : 1000 ms
 
 
 
-        console.log(dataPerCountry)
-    	console.log(dataPerCountryPerYear)
 
     	// Création de la grille
     	var n = Math.ceil(Math.sqrt(dataPerCountry.length));	// Nombre de colonnes
@@ -131,7 +112,7 @@
 
         //console.log(maxsTab);
 
-
+        //Grille par défaut
         grid.selectAll("rect")
     		.data(dataPerCountryPerYear)
     		.enter()
@@ -141,7 +122,7 @@
     			.attr("x", (d, i) => square_length * (i % n))
     			.attr("y", (d, i) => square_length * Math.floor(i / n))
     			.attr("stroke", "grey")  
-    			.attr("fill", d => color(Number(d.values[0].value))) //d correspond à un pays, d.values[0] correspond à la première année de ce pays, et value correspond à la température moyenne de cette année
+    			.attr("fill", d => d3.color('white')) //d correspond à un pays, d.values[0] correspond à la première année de ce pays, et value correspond à la température moyenne de cette année
     })
 	</script>
 
