@@ -9,6 +9,21 @@
 	<!-- Materialize CSS -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <style type="text/css">
+        div.tooltip {
+            color: #222;
+            background-color: #fff;
+            padding: .5em;
+            text-shadow: #f5f5f5 0 1px 0;
+            border-radius: 2px;
+            opacity: 0.9;
+            position: absolute;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -25,6 +40,12 @@
 		var margin = {top: 40, right: 40, bottom: 50, left: 40},
 			width = 1500 - margin.left - margin.right,
 			height = 1000 - margin.top - margin.bottom;
+
+
+
+        var tooltip = d3.select("body").append("div")
+            .attr("class", "hidden tooltip")
+        var currentCountryIndice;
 
 		// Grille
 		var grid = d3.select("body").append("svg")
@@ -61,6 +82,7 @@
     		if (temp > maxTemp) maxTemp = temp;
     	})
 
+
     	color.domain([minTemp, maxTemp]);
 
     	console.log('minYear', minYear, 'maxYear', maxYear);
@@ -75,6 +97,7 @@
 
     	console.log('countries', countries);
     	console.log('dataPerCountry', dataPerCountry);
+
 
         // TODO : Mettre NULL si pas de donnée 
         // TODO éventuellement : dynamique sur pas que les années mais aussi par saison ou autre période
@@ -91,6 +114,7 @@
         	.key(d => d.Country)
         	.rollup(d => {return {'minYear': d3.min(d, v => v.dt.getFullYear()), 'maxYear': d3.max(d, v => v.dt.getFullYear())}})
         	.object(data_csv)
+
 
         console.log('limitPerCountry', limitPerCountry)
 
@@ -109,6 +133,7 @@
 
         console.log('data', data);
 
+
 	  	// Création de la grille
 	  	var n = Math.ceil(Math.sqrt(data.length));	// Nombre de colonnes
 	  	var square_length = Math.floor(width / n);	// longueur d'un côté d'un carré de la grille
@@ -125,15 +150,61 @@
 		    .attr("x", (d, i) => square_length * (i % n))
 		    .attr("y", (d, i) => square_length /2* Math.floor(i / n))
 		    .attr("stroke", "grey")  
-			.attr("fill", d3.color('white')) //d correspond à un pays, d.values[0] correspond à la première année de ce pays, et value correspond à la température moyenne de cette année
+			  .attr("fill", d => d3.color('white')) //d correspond à un pays, d.values[0] correspond à la première année de ce pays, et value correspond à la température moyenne de cette année
+        .on('mouseover',function(d,i){ 
 
-		//Modification de l'affichage de la grille à chaque frame
+                d3.select(this)
+                  .raise()
+                  .attr('width',2*square_length)
+                  .attr('height',2*square_length)
+                  .attr("x", square_length * ((i % n)-0.5))
+                  .attr("y", square_length * (Math.floor(i / n)-0.5))
+
+                var tempToShow = '';
+                    if (d.currentYearAvailable){
+                        tempToShow = Math.floor(10*d.yearTemperatures[minYear + yearCount % numYear])/10 + '°C';
+                    } 
+
+                tooltip
+                        .classed("hidden", false)
+                        .html(countries[i]+'<br>'+tempToShow);
+
+
+                currentCountryIndice = i;
+
+
+                /*tooltip
+                    .classed("hidden", false)
+                    .html(countries[i]+'<br>'+d[2000]);
+                */
+            
+            })
+            .on('mousemove', function(d,i){
+                var mouse = d3.mouse(this);
+                tooltip.attr("style", "left:" + (mouse[0] + 20) + "px; top:" + (mouse[1]) + "px");
+            })
+            .on('mouseout',function(d,i){
+                tooltip.classed("hidden", true);   
+                d3.select(this)
+
+                  .attr('width',square_length)
+                  .attr('height',square_length)
+
+                  .attr("x", square_length * (i % n))
+                  .attr("y", square_length * Math.floor(i / n));
+                currentCountryIndice = undefined;
+
+                  //.attr("x", (d, i) => square_length * (i % n))
+            })
+      
+    //Modification de l'affichage de la grille à chaque frame
 		var yearCount = 0;
 		var numYear = maxYear - minYear;    
 	    
 		let windowsDuration = 250;
+	  setInterval(update, windowsDuration) // Durée d'affichage de chaque année
+     
 
-	    setInterval(update, windowsDuration) // Durée d'affichage de chaque année
 
 	    function update() {
 	    	grid.selectAll("rect")
@@ -152,6 +223,17 @@
 
 	    	d3.select('#year').html('Année : ' + (minYear + yearCount % numYear))
 
+        
+            if (currentCountryIndice != undefined){
+                var d = data[currentCountryIndice];
+                var tempToShow = '';
+                        if (data[i].currentYearAvailable){
+                            tempToShow = Math.floor(10*d.yearTemperatures[minYear + yearCount % numYear])/10 + '°C';
+                        } 
+
+                tooltip.html(d.country+'<br>'+tempToShow);
+            }
+        
 	    	yearCount++;
 
 		    // Parcours des pays pour voir si on dépasse le max
