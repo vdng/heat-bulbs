@@ -8,35 +8,37 @@
 </head>
 
 <body>
+
 	<h1>Heat bulbs</h1>
+	<h2 id="year"></h2>
 
 	<script>
 		var margin = {top: 40, right: 40, bottom: 50, left: 40},
-		width = 500 - margin.left - margin.right,
-		height = 500 - margin.top - margin.bottom;
+			width = 500 - margin.left - margin.right,
+			height = 500 - margin.top - margin.bottom;
 
 		// Grille
 		var grid = d3.select("body").append("svg")
-		.attr("width", width + margin.left + margin.right)
-		.attr("height", height + margin.top + margin.bottom)
-		.append("g")
-		.attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
-		.attr("class", "grid");
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+			.attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
+			.attr("class", "grid");
 
     	// Echelle de couleur pour les temperatures (juste pour le début, pour visualiser l'évolution des températures sans notion de record)
-    	var color = d3.scaleSequential().interpolator(d3.interpolateTurbo)
-    	color.domain([-50, 50])
+    	var color = d3.scaleSequential().interpolator(d3.interpolateTurbo);
+    	color.domain([-50, 50]);
 
-		
+    	var data = [];
 
 		// Charger le fichier : il faudrait qu'on puisse charger différents fichiers et laisser l'utilisateur choisir s'il veut des villes ou des pays
-		d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLandTemperaturesByCountry.csv", function(data) {
+		d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLandTemperaturesByCountry.csv", function(data_csv) {
 
     	// Parse le temps : 1985-10-23
     	var parse = d3.timeParse("%Y-%m-%d");
-    	var minYear = 2000,
-    		maxYear = 0;
-    	data.forEach(d => {
+    	var minYear = 2000, maxYear = 0;
+
+    	data_csv.forEach(d => {
     		d.dt = parse(d.dt);
     		let year = d.dt.getFullYear();
     		if (year < minYear) minYear = year;
@@ -49,7 +51,7 @@
     	// nest pour formater les données
     	var dataPerCountry = d3.nest()
     		.key(d => d.Country)
-    		.entries(data)
+    		.entries(data_csv)
 
     	var countries = dataPerCountry.map(d => d.key);
 
@@ -59,33 +61,44 @@
         // TODO : Mettre NULL si pas de donnée 
         // TODO éventuellement : dynamique sur pas que les années mais aussi par saison ou autre période
         //Nest pour formater les données : regroupées par pays et par année (et on a la moyenne de l'année)
-        var dataPerCountryPerYear = d3.nest()
-        .key(d => d.Country)
-        .key(d => d.dt.getFullYear())
-        .rollup(d => {return d3.mean(d, function(e){ return e.AverageTemperature;}) })
-        .object(data)
+        var tempPerCountryPerYear = d3.nest()
+	        .key(d => d.Country)
+	        .key(d => d.dt.getFullYear())
+	        .rollup(d => {return d3.mean(d, function(e){ return e.AverageTemperature;}) })
+	        .object(data_csv)
 
-        dataPerCountryPerYear = Object.keys(dataPerCountryPerYear).map(function (key) { return dataPerCountryPerYear[key]; });
-        console.log('dataPerCountryPerYear', dataPerCountryPerYear);
+        console.log('tempPerCountryPerYear', tempPerCountryPerYear);
 
-        // On enregistre pour chaque pays le maximum courant, ainsi que l'information si on va allumer l'ampoule ou pas (pour pouvoir calculer en amont)
-        var maxsTab = {};
+        var limitPerCountry = d3.nest()
+        	.key(d => d.Country)
+        	.rollup(d => {return {'minYear': d3.min(d, v => v.dt.getFullYear()), 'maxYear': d3.max(d, v => v.dt.getFullYear())}})
+        	.object(data_csv)
+
+        console.log('limitPerCountry', limitPerCountry)
 
         // TODO : année de référence
         for (var i = 0; i < countries.length; i++) {
-        	maxsTab[countries[i]] = {"currentMax": dataPerCountryPerYear[i][1950], "vaAllumer": false}
+        	data[i] = {
+        		"country": countries[i],
+        		"yearTemperatures": tempPerCountryPerYear[countries[i]],
+        		"currentMax": tempPerCountryPerYear[countries[i]][limitPerCountry[countries[i]].minYear],
+        		"justBeaten": false,
+        		"minYear": limitPerCountry[countries[i]].minYear,
+        		"maxYear": limitPerCountry[countries[i]].maxYear
+        	}
         }
-        console.log("maxsTab : ", maxsTab);		
+
+        console.log('data', data);
 
 	  	// Création de la grille
-	  	var n = Math.ceil(Math.sqrt(dataPerCountry.length));	// Nombre de colonnes
+	  	var n = Math.ceil(Math.sqrt(data.length));	// Nombre de colonnes
 	  	var square_length = Math.floor(width / n);	// longueur d'un côté d'un carré de la grille
 
-	    //console.log(maxsTab);
+	    //console.log(maxPerCountry);
 
 	    //Grille par défaut
 	    grid.selectAll("rect")
-		    .data(dataPerCountryPerYear)
+		    .data(data)
 		    .enter()
 		    .append("rect")
 		    .attr("width", square_length)
@@ -93,41 +106,47 @@
 		    .attr("x", (d, i) => square_length * (i % n))
 		    .attr("y", (d, i) => square_length * Math.floor(i / n))
 		    .attr("stroke", "grey")  
-			.attr("fill", d => d3.color('white')) //d correspond à un pays, d.values[0] correspond à la première année de ce pays, et value correspond à la température moyenne de cette année
+			.attr("fill", d3.color('white')) //d correspond à un pays, d.values[0] correspond à la première année de ce pays, et value correspond à la température moyenne de cette année
 
 		//Modification de l'affichage de la grille à chaque frame
-		var anneeCourante = 0;
-		var nbAnnees = maxYear - minYear;    
-	    setInterval(() => update(maxsTab), 250) // Durée d'affichage de chaque année
+		var yearCount = 0;
+		var numYear = maxYear - minYear;    
+	    
+		let windowsDuration = 100;
+
+	    setInterval(update, windowsDuration) // Durée d'affichage de chaque année
+
 	    function update() {
 	    	grid.selectAll("rect")
 	    	.transition()
-	    	.duration(250)
+	    	.duration(windowsDuration)
 	    	.attr("fill", (d, i) => {
 	      	// Allumage ou pas de la case
-	      	if (maxsTab[countries[i]].vaAllumer){
-	      		return color(Number(d[minYear + anneeCourante % nbAnnees])) } 
+	      	if (data[i].justBeaten){
+	      		return color(Number(d.yearTemperatures[minYear + yearCount % numYear])) } 
 	      		else {
 	      			return d3.color('white')
 	      		}
 	      	});
-	    	anneeCourante++;
+
+	    	d3.select('#year').html('Année : ' + (minYear + yearCount))
+
+	    	yearCount++;
 
 		    // Parcours des pays pour voir si on dépasse le max
 		    // Pour le moment, pas ouf : les premières frames affichent beaucoup d'ampoules allumées. C'est normal, il y a beaucoup de chances de casser son record quand on n'a peu de données : il faudrait pas commencer de la première année mais de la n-ème années en initialisant le max au max des 50 premières années
 		    //Bug à partir de 60 ans : trouver pourquoi
 		    for (var i = 0; i < countries.length; i++){
-		      	country = countries[i];
-		      	if (maxsTab[country].currentMax < dataPerCountryPerYear[i][minYear + anneeCourante % nbAnnees]){ //Si on dépasse le max
-		      		maxsTab[country].currentMax = dataPerCountryPerYear[i][minYear + anneeCourante % nbAnnees];
-		      		maxsTab[country].vaAllumer = true; // Conseil donné par Théo (pas moi, le doctorant) : faire le calcul du booléen maintenant et pas sur le moment de l'affichage
+		      	if (data[i].currentMax < data[i].yearTemperatures[minYear + yearCount % numYear]){ //Si on dépasse le max
+		      		data[i].currentMax = data[i].yearTemperatures[minYear + yearCount % numYear];
+		      		data[i].justBeaten = true; // Conseil donné par Théo (pas moi, le doctorant) : faire le calcul du booléen maintenant et pas sur le moment de l'affichage
 		      	}
 		      	else {
-		      		maxsTab[country].vaAllumer = false;	
+		      		data[i].justBeaten = false;	
 		      	}
-		      }
-		  }
-		})
+		    }
+		}
+	})
 
 </script>
 
