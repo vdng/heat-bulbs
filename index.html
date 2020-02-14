@@ -156,9 +156,9 @@
                 d3.select(this)
                   .raise()
                   .attr('width',2*square_length)
-                  .attr('height',2*square_length)
+                  .attr('height',square_length)
                   .attr("x", square_length * ((i % n)-0.5))
-                  .attr("y", square_length * (Math.floor(i / n)-0.5))
+                  .attr("y", square_length /2* (Math.floor(i / n)-0.5))
 
                 var tempToShow = '';
                     if (d.currentYearAvailable){
@@ -188,10 +188,10 @@
                 d3.select(this)
 
                   .attr('width',square_length)
-                  .attr('height',square_length)
+                  .attr('height',square_length/2)
 
                   .attr("x", square_length * (i % n))
-                  .attr("y", square_length * Math.floor(i / n));
+                  .attr("y", square_length /2* Math.floor(i / n));
                 currentCountryIndice = undefined;
 
                   //.attr("x", (d, i) => square_length * (i % n))
