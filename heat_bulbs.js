@@ -209,7 +209,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         for (var i = 0; i < countries.length; i++) 
         {
             /*if (data[i].yearTemperatures[yearCount] != undefined) */
-            if (data[i].minYear - minYear <= yearCount) 
+            if (data[i].minYear - minYear <= yearCount && !isNaN(data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value)) 
             {
                 data[i].currentYearAvailable = true;
 	            if (data[i].currentMax < data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value) 
