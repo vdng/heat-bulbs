@@ -63,8 +63,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     data_csv.forEach(d => {
         d.dt = parse(d.dt);
         let year = d.dt.getFullYear();
-        d.AverageTemperature = Number(d.AverageTemperature); 
-        d.AverageTemperatureUncertainty = Number(d.AverageTemperatureUncertainty); 
+        d.AverageTemperature = d.AverageTemperature ? Number(d.AverageTemperature) : null; 
+        d.AverageTemperatureUncertainty = d.AverageTemperatureUncertainty? Number(d.AverageTemperatureUncertainty) : null; 
         let temp = d.AverageTemperature;
         if (year < minYear) minYear = year;
         if (year > maxYear) maxYear = year;
@@ -141,6 +141,13 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     //console.log(maxPerCountry);
 
+	var line = d3.line()
+		.x(v => yearScale(v.key))
+		.y(v => tempeartureScale(v.value))
+		.curve(d3.curveCardinal);
+
+	line.defined(d => d.value != null)
+
     //Grille par défaut
     grid.selectAll("rect")
         .data(data)
@@ -181,11 +188,6 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         		.duration(200)
         		.call(yAxis)
 
-        	let line = d3.line()
-        		.x(v => yearScale(v.key))
-        		.y(v => tempeartureScale(v.value))
-        		.curve(d3.curveCardinal);
-
         	chart.select("path")
         		.data([d.yearTemperatures])
         		.transition()
@@ -206,6 +208,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         //Bug à partir de 60 ans : trouver pourquoi
         for (var i = 0; i < countries.length; i++) 
         {
+            /*if (data[i].yearTemperatures[yearCount] != undefined) */
             if (data[i].minYear - minYear <= yearCount) 
             {
                 data[i].currentYearAvailable = true;
