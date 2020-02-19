@@ -365,7 +365,6 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                 .attr("opacity", 0)            
         }
 
-        }
 
         if (buttonOnPlay){	
         	yearCount++;
