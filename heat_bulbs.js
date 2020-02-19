@@ -4,6 +4,21 @@ var tooltip = d3.select("body").append("div")
     .attr("class", "hidden tooltip")
 var hoveredCountryIdx = 0;
 
+
+//Bouton de pause
+// ======
+var strButton = 'Pause';
+var buttonOnPlay = true;
+
+
+
+
+
+
+
+
+
+
 // Grille
 // ======
 var gridMargin = { top: 40, right: 40, bottom: 50, left: 40 },
@@ -33,6 +48,13 @@ var chart = d3.select("#chart")
     .append("g")
     .attr("transform", "translate(" + gridMargin.left + ", " + gridMargin.top + ")")
     .attr("class", "chart")
+
+chart.append("text")
+        .attr("x", (chartWidth / 2))             
+        .attr("y", 0 - (chartMargin.top / 4))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "40px") 
+        .text("");
 
 chart.append("path")
     .attr("class", "temperatureUncertainty")
@@ -79,6 +101,8 @@ var clickedCountryIdx = undefined;
 
 // Charger le fichier : il faudrait qu'on puisse charger différents fichiers et laisser l'utilisateur choisir s'il veut des villes ou des pays
 d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLandTemperaturesByCountry.csv", function(data_csv) {
+
+
 
     // Parse le temps : 1985-10-23
     var parse = d3.timeParse("%Y-%m-%d");
@@ -245,6 +269,10 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         		.transition()
         		.duration(200)
         		.attr("d", line)
+
+            chart.select("text")
+                .text(data[clickedCountryIdx].country)
+
         })
 
     //Modification de l'affichage de la grille à chaque frame
@@ -252,7 +280,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     var numYear = maxYear - minYear;
 
     let windowsDuration = 100;
-    setInterval(update, windowsDuration) // Durée d'affichage de chaque année
+    var evol = setInterval(update, windowsDuration) // Durée d'affichage de chaque année
 
     function update() {
     	// Parcours des pays pour voir si on dépasse le max
@@ -267,17 +295,19 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 	            if (data[i].currentMax < data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value.temperature) 
 	            { // Si on dépasse le max
 	                data[i].currentMax = data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value.temperature;
-	                data[i].lastBeaten = 0; // Conseil donné par Théo (pas moi, le doctorant) : faire le calcul du booléen maintenant et pas sur le moment de l'affichage
+	                if (buttonOnPlay){
+	                data[i].lastBeaten = 0;} // Conseil donné par Théo (pas moi, le doctorant) : faire le calcul du booléen maintenant et pas sur le moment de l'affichage
+
 	            } 
 	            else
-	            {
-	                data[i].lastBeaten += 1;
+	            {	if (buttonOnPlay){
+	                data[i].lastBeaten += 1;}
 	            }
 	        }
             else
             {
                 data[i].currentYearAvailable = false;
-	            data[i].lastBeaten += 1;
+	            if (buttonOnPlay){data[i].lastBeaten += 1;}
             }
         }
 
@@ -335,8 +365,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                 .attr("opacity", 0)            
         }
 
-        yearCount++;
+        }
 
+        if (buttonOnPlay){	
+        	yearCount++;
+        }
         if (yearCount % numYear == 0) 
         {
         	console.log("reset")
@@ -351,8 +384,35 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     } // function update()
 
 
+    //Button
+    // =======
+	d3.select('#pause').html(strButton)
+	d3.select('#pause')
+	.on('click', function() {
+		changeStatusButton();
+		d3.select('#pause').html(strButton)
+
+	})
+
+
+
+    function changeStatusButton(){
+		if (buttonOnPlay){
+			buttonOnPlay = false;
+			strButton = 'Play'
+			//clearInterval(evol);
+		} else {
+			buttonOnPlay = true;
+			strButton = 'Pause';
+			//evol;
+		}
+	}
+
+
 })
 
 function showTemp(temp) {
     return Math.floor(10 * temp) / 10 + '°C'
 }
+
+
