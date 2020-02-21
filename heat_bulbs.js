@@ -330,7 +330,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .on('mouseout', function(d, i) {
             tooltip.classed("hidden", true);
             d3.select(this)
-                .attr("stroke", "none")
+                .attr("stroke", "#E5E5E5FF")
         })
         .on('mousemove', function() {
             tooltip.attr("style", "left:" + (d3.event.pageX + 5) + "px; top:" + (d3.event.pageY - 60) + "px");
