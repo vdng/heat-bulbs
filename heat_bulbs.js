@@ -243,15 +243,15 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             }
             else 
             {
-                x = numHexInRing / 2 - tempIdx - 1;
-                if (ringNumber % 2 != 0) x += 0.5;
+                x = numHexInRing / 2 - tempIdx;
+                if (ringNumber % 2 != 0) x -= 0.5;
             }
 /*            if (ringNumber % 2 != 0 && tempIdx == rotation) x -= 0.5;*/ 
 
             if (shiftedIdx >= numHexInRing / 2) x = - x;
 
             hexPosition = [x * Math.sqrt(3) * hexRadius, y * 1.5 * hexRadius]
-           /* console.log(countries[i], [x, y], i, idxInRing, shiftedIdx, tempIdx, numHexInRing, ringNumber)*/
+            console.log(countries[i], [x, y], i, idxInRing, shiftedIdx, tempIdx, numHexInRing, ringNumber)
         }
 
 
