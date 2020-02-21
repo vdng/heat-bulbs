@@ -359,7 +359,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     var currentYear = minYear;
 
     let windowsDuration = 100;
-    var evol = setInterval(update, windowsDuration) // Durée d'affichage de chaque année
+    var evol = setInterval(update, windowsDuration); // Durée d'affichage de chaque année
 
     function update() {
     	// Parcours des pays pour voir si on dépasse le max
@@ -395,12 +395,15 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             .attr("fill", (d, i) => {
                 // Allumage ou pas de la case
                 if (!d.currentYearAvailable) return "#eee"
-                if (d.lastBeaten < rememberRecord) return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
-                else return d3.color('white')
+                //if (d.lastBeaten < rememberRecord) return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
+                //else return d3.color('white')
+                return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
             })
             .attr("fill-opacity", (d, i) => {
-                if (!d.currentYearAvailable) return 1;
-                return d.lastBeaten < rememberRecord ? 1 - d.lastBeaten / rememberRecord : 0
+
+                return fillWithlastRecord(d);
+                //if (!d.currentYearAvailable) return 1;
+                //return d.lastBeaten < rememberRecord ? 1 - d.lastBeaten / rememberRecord : 0
             })
 
         // Affichage texte de l'année
@@ -467,17 +470,24 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     function fillWithlastRecord(d){
         var listYears = d.yearTemperatures
-        if (d.yearTemperatures.length() > 0) {
-            var maxTemp = Number(d.yearTemperatures[yearCount + minYear - d.minYear].value.temperature);
-            var argMaxTemp = 0;
-            for (let i =0; i <= yearCount; i++){
-                if (d.yearTemperatures[i]
+        var opac = 0;
+        if (!d.currentYearAvailable){
+            return 1
+        } else {
+            var maxTemp = 0;
+            var argMaxTemp = minYear;
+            for (let i = minYear; i <= currentYear; i++){
+                var tempTest = d.yearTemperatures[i - d.minYear];
+                if (tempTest != undefined){
+                    if (Number(tempTest.value.temperature) > maxTemp){
+                        maxTemp = Number(tempTest.value.temperature);
+                        argMaxTemp = i;
+                    }
+                }
             }
+            opac = 1 - (currentYear-argMaxTemp)/rememberRecord;
+            return opac        
         }
-
-
-        return col, opac
-
     }
 
 
@@ -512,19 +522,19 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
   // =======
 
 
-  slider.on("input", function(val) {
+    slider.on("input", function(val) {
 	      updateSlider(this.value);
 	    })
 
-  function updateSlider(value){
-    currentYear = Number(value);
-    update();
-  }
-
+    function updateSlider(value){
+        currentYear = Number(value);
+        update();
+    }
 
 
 
 })
+
 
 function showTemp(temp) {
     return Math.floor(10 * temp) / 10 + '°C'
