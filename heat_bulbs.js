@@ -11,6 +11,9 @@ var strButton = 'Pause';
 var buttonOnPlay = true;
 
 
+// Slider
+// ======
+ var slider = d3.select("#slider")
 
 
 
@@ -55,10 +58,10 @@ var chart = d3.select("#chart")
     .attr("class", "chart")
 
 chart.append("text")
-        .attr("x", (chartWidth / 2))             
+        .attr("x", (chartWidth / 2))
         .attr("y", 0 - (chartMargin.top / 4))
-        .attr("text-anchor", "middle")  
-        .style("font-size", "40px") 
+        .attr("text-anchor", "middle")
+        .style("font-size", "40px")
         .text("");
 
 chart.append("path")
@@ -83,8 +86,13 @@ chart.append("path")
     .attr("class", "yearLine")
     .attr("stroke", "black")
     .attr("stroke-width", 1)
-    .attr("stroke-dasharray", "5,5")   
+    .attr("stroke-dasharray", "5,5")
     .attr("d", "M0 0" + " L0 " + chartHeight)
+
+
+
+
+
 
 // Echelles
 // ========
@@ -117,8 +125,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     data_csv.forEach(d => {
         d.dt = parse(d.dt);
         let year = d.dt.getFullYear();
-        d.AverageTemperature = d.AverageTemperature ? Number(d.AverageTemperature) : null; 
-        d.AverageTemperatureUncertainty = d.AverageTemperatureUncertainty ? Number(d.AverageTemperatureUncertainty) : null; 
+        d.AverageTemperature = d.AverageTemperature ? Number(d.AverageTemperature) : null;
+        d.AverageTemperatureUncertainty = d.AverageTemperatureUncertainty ? Number(d.AverageTemperatureUncertainty) : null;
         let temp = d.AverageTemperature;
         if (year < minYear) minYear = year;
         if (year > maxYear) maxYear = year;
@@ -162,11 +170,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     var tempPerCountryPerYear = d3.nest()
         .key(d => d.Country)
         .key(d => d.dt.getFullYear())
-        .rollup(d => { 
+        .rollup(d => {
                     return {
                         temperature: d3.mean(d, function(e) { return e.AverageTemperature; }),
                         uncertainty: d3.mean(d, function(e) { return e.AverageTemperatureUncertainty; })
-                        } 
+                        }
                     })
         .entries(data_csv)
 
@@ -174,11 +182,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     var limitPerCountry = d3.nest()
         .key(d => d.Country)
-        .rollup(d => { return { 'minYear': d3.min(d, v => v.dt.getFullYear()), 
-        						'maxYear': d3.max(d, v => v.dt.getFullYear()), 
-        						'minTemp': d3.min(d, v => v.AverageTemperature), 
-        						'maxTemp': d3.max(d, v => v.AverageTemperature) 
-        					  } 
+        .rollup(d => { return { 'minYear': d3.min(d, v => v.dt.getFullYear()),
+        						'maxYear': d3.max(d, v => v.dt.getFullYear()),
+        						'minTemp': d3.min(d, v => v.AverageTemperature),
+        						'maxTemp': d3.max(d, v => v.AverageTemperature)
+        					  }
         			  })
         .entries(data_csv)
 
@@ -361,19 +369,20 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     	// Parcours des pays pour voir si on dépasse le max
         // Pour le moment, pas ouf : les premières frames affichent beaucoup d'ampoules allumées. C'est normal, il y a beaucoup de chances de casser son record quand on n'a peu de données : il faudrait pas commencer de la première année mais de la n-ème années en initialisant le max au max des 50 premières années
         //Bug à partir de 60 ans : trouver pourquoi
-        for (var i = 0; i < countries.length; i++) 
+        for (var i = 0; i < countries.length; i++)
         {
             /*if (data[i].yearTemperatures[yearCount] != undefined) */
-            if (data[i].minYear - minYear <= yearCount && !isNaN(data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value.temperature)) 
+            console.log(yearCount)
+            if (data[i].minYear - minYear <= yearCount && !isNaN(data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value.temperature))
             {
                 data[i].currentYearAvailable = true;
-	            if (data[i].currentMax < data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value.temperature) 
+	            if (data[i].currentMax < data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value.temperature)
 	            { // Si on dépasse le max
 	                data[i].currentMax = data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value.temperature;
 	                if (buttonOnPlay){
 	                data[i].lastBeaten = 0;} // Conseil donné par Théo (pas moi, le doctorant) : faire le calcul du booléen maintenant et pas sur le moment de l'affichage
 
-	            } 
+	            }
 	            else
 	            {	if (buttonOnPlay){
 	                data[i].lastBeaten += 1;}
@@ -411,7 +420,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                         var tempToShow = '';
                                 if (d.currentYearAvailable){
                                     tempToShow = Math.floor(10 * d.yearTemperatures[minYear + yearCount]) / 10 + '°C';
-                                } 
+                                }
 
                         tooltip.html(d.country+'<br>'+tempToShow);
                     }*/
@@ -422,7 +431,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             .duration(200)
             .attr("d", "M" + xyear + " 0" + " L" + xyear + " " + chartHeight)
 
-        if (clickedCountryIdx != undefined && data[clickedCountryIdx].currentYearAvailable) 
+        if (clickedCountryIdx != undefined && data[clickedCountryIdx].currentYearAvailable)
         {
         	let clickedCountry = data[clickedCountryIdx];
         	chart.select(".yearCircle")
@@ -437,18 +446,22 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             chart.select(".yearCircle")
                 .transition()
                 .duration(200)
-                .attr("opacity", 0)            
+                .attr("opacity", 0)
         }
 
 
-        if (buttonOnPlay){	
+
+        if (buttonOnPlay){
         	yearCount++;
+
+          slider.property("value", yearCount);
+          //console.log("Slider : ", slider);
         }
-        if (yearCount % numYear == 0) 
+        if (yearCount % numYear == 0)
         {
         	console.log("reset")
         	yearCount = 0;
-            for (var i = 0; i < countries.length; i++) 
+            for (var i = 0; i < countries.length; i++)
             {
                 data[i].currentMax = tempPerCountryPerYear[i].values[0].value.temperature;
                 data[i].lastBeaten = rememberRecord;
@@ -483,10 +496,22 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 	}
 
 
+  // Slider
+  // =======
+  slider.on("input", function(val) {
+	      updateSlider(this.value);
+	    })
+
+  function updateSlider(value){
+    yearCount = Number(value);
+    update();
+  }
+
+
+
+
 })
 
 function showTemp(temp) {
     return Math.floor(10 * temp) / 10 + '°C'
 }
-
-
