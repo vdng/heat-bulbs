@@ -401,7 +401,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             })
             .attr("fill-opacity", (d, i) => {
 
-                return fillWithlastRecord(d);
+                return opacityWithLastRecord(d);
                 //if (!d.currentYearAvailable) return 1;
                 //return d.lastBeaten < rememberRecord ? 1 - d.lastBeaten / rememberRecord : 0
             })
@@ -468,9 +468,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     } // function update()
 
 
-    function fillWithlastRecord(d){
+    function opacityWithLastRecord(d){
         var listYears = d.yearTemperatures
-        var opac = 0;
         if (!d.currentYearAvailable){
             return 1
         } else {
@@ -485,8 +484,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                     }
                 }
             }
-            opac = 1 - (currentYear-argMaxTemp)/rememberRecord;
-            return opac        
+            return 1 - (currentYear-argMaxTemp)/rememberRecord;
+                    
         }
     }
 
