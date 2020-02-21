@@ -471,6 +471,24 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     } // function update()
 
 
+    function fillWithlastRecord(d){
+        var listYears = d.yearTemperatures
+        if (d.yearTemperatures.length() > 0) {
+            var maxTemp = Number(d.yearTemperatures[yearCount + minYear - d.minYear].value.temperature);
+            var argMaxTemp = 0;
+            for (let i =0; i <= yearCount; i++){
+                if (d.yearTemperatures[i]
+            }
+        }
+
+
+        return col, opac
+
+    }
+
+
+
+
     //Button
     // =======
 	d3.select('#pause').html(strButton)
