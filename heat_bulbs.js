@@ -126,6 +126,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         if (temp > maxTemp) maxTemp = temp;
     })
 
+    slider
+        .attr("value", minYear)
+        .attr("min", minYear)
+        .attr("max", maxYear)
+
     console.log("data_csv", data_csv);
 
     color.domain([minTemp, maxTemp]);
@@ -351,8 +356,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         })
 
     //Modification de l'affichage de la grille à chaque frame
-    var yearCount = 0;
-    var numYear = maxYear - minYear;
+    var currentYear = minYear;
 
     let windowsDuration = 100;
     var evol = setInterval(update, windowsDuration) // Durée d'affichage de chaque année
@@ -363,14 +367,12 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         //Bug à partir de 60 ans : trouver pourquoi
         for (var i = 0; i < countries.length; i++)
         {
-            /*if (data[i].yearTemperatures[yearCount] != undefined) */
-            console.log(yearCount)
-            if (data[i].minYear - minYear <= yearCount && !isNaN(data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value.temperature))
+            if (data[i].minYear <= currentYear && !isNaN(data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature))
             {
                 data[i].currentYearAvailable = true;
-	            if (data[i].currentMax < data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value.temperature)
+	            if (data[i].currentMax < data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature)
 	            { // Si on dépasse le max
-	                data[i].currentMax = data[i].yearTemperatures[yearCount + minYear - data[i].minYear].value.temperature;
+	                data[i].currentMax = data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature;
 	                if (buttonOnPlay){
 	                data[i].lastBeaten = 0;} // Conseil donné par Théo (pas moi, le doctorant) : faire le calcul du booléen maintenant et pas sur le moment de l'affichage
 
@@ -393,7 +395,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             .attr("fill", (d, i) => {
                 // Allumage ou pas de la case
                 if (!d.currentYearAvailable) return "#eee"
-                if (d.lastBeaten < rememberRecord) return color(Number(d.yearTemperatures[yearCount + minYear - d.minYear].value.temperature))
+                if (d.lastBeaten < rememberRecord) return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
                 else return d3.color('white')
             })
             .attr("fill-opacity", (d, i) => {
@@ -402,22 +404,22 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             })
 
         // Affichage texte de l'année
-        d3.select('#year').html(minYear + yearCount)
+        d3.select('#year').html(currentYear)
 
         let hoveredCountry = data[hoveredCountryIdx];
-        tempToShow = hoveredCountry.currentYearAvailable ? showTemp(hoveredCountry.yearTemperatures[yearCount + minYear - hoveredCountry.minYear].value.temperature) : ""
+        tempToShow = hoveredCountry.currentYearAvailable ? showTemp(hoveredCountry.yearTemperatures[currentYear - hoveredCountry.minYear].value.temperature) : ""
         tooltip.html(hoveredCountry.country + '<br>' + tempToShow);
         /*            if (hoveredCountryIdx != undefined){
                         var d = data[hoveredCountryIdx];
                         var tempToShow = '';
                                 if (d.currentYearAvailable){
-                                    tempToShow = Math.floor(10 * d.yearTemperatures[minYear + yearCount]) / 10 + '°C';
+                                    tempToShow = Math.floor(10 * d.yearTemperatures[currentYear]) / 10 + '°C';
                                 }
 
                         tooltip.html(d.country+'<br>'+tempToShow);
                     }*/
 
-        let xyear = yearScale(minYear + yearCount);
+        let xyear = yearScale(currentYear);
         chart.select(".yearLine")
             .transition()
             .duration(200)
@@ -430,8 +432,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         		.transition()
         		.duration(200)
                 .attr("opacity", 1)
-        		.attr("cx", yearScale(minYear + yearCount))
-        		.attr("cy", tempeartureScale(clickedCountry.yearTemperatures[yearCount + minYear - clickedCountry.minYear].value.temperature))
+        		.attr("cx", yearScale(currentYear))
+        		.attr("cy", tempeartureScale(clickedCountry.yearTemperatures[currentYear - clickedCountry.minYear].value.temperature))
         }
         else
         {
@@ -444,15 +446,15 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
 
         if (buttonOnPlay){
-        	yearCount++;
+        	currentYear++;
 
-          slider.property("value", yearCount);
+          slider.property("value", currentYear);
           //console.log("Slider : ", slider);
         }
-        if (yearCount % numYear == 0)
+        if (currentYear == maxYear + 1 )
         {
         	console.log("reset")
-        	yearCount = 0;
+        	currentYear = minYear;
             for (var i = 0; i < countries.length; i++)
             {
                 data[i].currentMax = tempPerCountryPerYear[i].values[0].value.temperature;
@@ -467,11 +469,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     // =======
 	/*d3.select('#pause').select("i").html(strButton)*/
 	d3.select('#pause').select("i")
-	.on('click', function() {
-		changeStatusButton();
-		d3.select('#pause').select("i").html(strButton)
+    	.on('click', function() {
+    		changeStatusButton();
+    		d3.select('#pause').select("i").html(strButton)
 
-	})
+    	})
 
 
 
@@ -490,12 +492,14 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
   // Slider
   // =======
+
+
   slider.on("input", function(val) {
 	      updateSlider(this.value);
 	    })
 
   function updateSlider(value){
-    yearCount = Number(value);
+    currentYear = Number(value);
     update();
   }
 
