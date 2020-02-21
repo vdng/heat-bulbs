@@ -37,6 +37,11 @@ var grid = d3.select("#grid")
     .attr("transform", "translate(" + gridMargin.left + ", " + gridMargin.top + ")")
     .attr("class", "grid")
 
+var hexbin = d3.hexbin()
+/*
+    .x(d => d.hex[0])
+    .y(d => d.hex[1])*/
+
 // Chart
 // =====
 var chartMargin = { top: 40, right: 40, bottom: 50, left: 40 },
@@ -188,7 +193,71 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     console.log('limitPerCountry', limitPerCountry)
 
+    // Création de la grille
+    var n = Math.ceil(Math.sqrt(countries.length)); // Nombre de colonnes
+    var square_length = Math.floor(gridWidth / n); // longueur d'un côté d'un carré de la grille
+    var rect_width = Math.floor(gridWidth / n);
+    var rect_height = Math.floor(gridHeight / n);
+
+    // Grille hexagonale
+    var hexRadius = d3.min([gridWidth/((n + 0.5) * Math.sqrt(3)), gridHeight/((n + 1 / 3) * 1.5)]);
+    hexbin.radius(hexRadius)
+    console.log("hexRadius", hexRadius)
+
+    let ringNumber = 1;
+
     for (var i = 0; i < countries.length; i++) {
+
+        let hexPosition = [0, 0];
+        if (i != 0) 
+        {
+            let firstIdxInRing = 6 * ringNumber * (ringNumber -1) / 2 + 1; 
+            let numHexInRing = 6 * ringNumber;
+            if (i == firstIdxInRing + numHexInRing) 
+            {
+                ringNumber++;
+                numHexInRing = 6 * ringNumber;
+                firstIdxInRing = 6 * ringNumber * (ringNumber - 1) / 2 + 1;
+            }
+
+
+            let idxInRing = i - firstIdxInRing;
+            let tempIdx = idxInRing < numHexInRing / 2 ? idxInRing : idxInRing - numHexInRing / 2;
+            let x = 0, y = 0;
+
+            if (tempIdx < ringNumber) y = tempIdx;
+            else if (tempIdx <= 2 * ringNumber) y = ringNumber;
+            else y = numHexInRing / 2 - tempIdx;
+
+            if (idxInRing >= numHexInRing / 2) y = - y;
+
+            let rotation = Math.floor(numHexInRing / 4);
+            let shiftedIdx = (idxInRing + rotation) % numHexInRing;
+            tempIdx = shiftedIdx < numHexInRing / 2 ? shiftedIdx : shiftedIdx - numHexInRing / 2;
+
+            if (tempIdx <= ringNumber / 2) 
+            {
+                x = tempIdx;
+                if (ringNumber % 2 != 0) x += 0.5;
+            }
+            else if (tempIdx < numHexInRing / 2 - Math.floor((ringNumber + 1) / 2)) 
+            {
+                x = ringNumber - Math.abs(rotation - tempIdx) / 2;
+            }
+            else 
+            {
+                x = numHexInRing / 2 - tempIdx - 1;
+                if (ringNumber % 2 != 0) x += 0.5;
+            }
+/*            if (ringNumber % 2 != 0 && tempIdx == rotation) x -= 0.5;*/ 
+
+            if (shiftedIdx >= numHexInRing / 2) x = - x;
+
+            hexPosition = [x * Math.sqrt(3) * hexRadius, y * 1.5 * hexRadius]
+           /* console.log(countries[i], [x, y], i, idxInRing, shiftedIdx, tempIdx, numHexInRing, ringNumber)*/
+        }
+
+
         data[i] = {
             "country": countries[i],
             "yearTemperatures": tempPerCountryPerYear[i].values,
@@ -198,17 +267,15 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             "minYear": limitPerCountry[i].value.minYear,
             "maxYear": limitPerCountry[i].value.maxYear,
             "minTemp": limitPerCountry[i].value.minTemp,
-            "maxTemp": limitPerCountry[i].value.maxTemp        }
+            "maxTemp": limitPerCountry[i].value.maxTemp,
+            "hex": [gridWidth / 2 + hexPosition[0], gridHeight / 2 + hexPosition[1] ]
+        }
     }
 
+    console.log("ringNumber", ringNumber)
+    console.log("hexRadius", hexRadius)
+
     console.log('data', data);
-
-
-    // Création de la grille
-    var n = Math.ceil(Math.sqrt(data.length)); // Nombre de colonnes
-    var square_length = Math.floor(gridWidth / n); // longueur d'un côté d'un carré de la grille
-    var rect_width = Math.floor(gridWidth / n);
-    var rect_height = Math.floor(gridHeight / n);
 
     //console.log(maxPerCountry);
 
@@ -226,15 +293,23 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     area.defined(d => d.value.temperature != null)
 
+    console.log("hexbin", hexbin(data))
     //Grille par défaut
-    grid.selectAll("rect")
+    grid.selectAll("path")
+        .data(data)
+        .enter()
+        .append("path")
+        .attr("d", function(d) { return "M" + d.hex[0] + "," + d.hex[1] + hexbin.hexagon(); })
+/*    grid.selectAll("rect")
         .data(data)
         .enter()
         .append("rect")
         .attr("width", rect_width)
         .attr("height", rect_height)
         .attr("x", (d, i) => rect_width * (i % n))
-        .attr("y", (d, i) => rect_height * Math.floor(i / n))
+        .attr("y", (d, i) => rect_height * Math.floor(i / n))*/
+        .attr("class", "countryBulb")
+        .attr("id", d => d.country + "Bulb")
         .attr("stroke", "none")
         .attr("fill", "white")
         .on('mouseover', function(d, i) {
@@ -320,7 +395,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             }
         }
 
-        grid.selectAll("rect")
+        grid.selectAll(".countryBulb")
             .transition()
             .duration(windowsDuration)
             .attr("fill", (d, i) => {
@@ -374,7 +449,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                 .attr("opacity", 0)
         }
 
-        
+
 
         if (buttonOnPlay){
         	yearCount++;
