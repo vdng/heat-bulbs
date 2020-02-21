@@ -16,7 +16,7 @@ var buttonOnPlay = true;
 
 // Grille
 // ======
-var gridMargin = { top: 40, right: 40, bottom: 50, left: 40 },
+var gridMargin = { top: 20, right: 30, bottom: 50, left: 40 },
     gridWidth = 900 - gridMargin.left - gridMargin.right,
     gridHeight = 600 - gridMargin.top - gridMargin.bottom;
 
@@ -36,7 +36,7 @@ var hexbin = d3.hexbin()
 
 // Chart
 // =====
-var chartMargin = { top: 40, right: 40, bottom: 50, left: 40 },
+var chartMargin = { top: 20, right: 40, bottom: 50, left: 40 },
 	chartWidth = 900 - chartMargin.left - chartMargin.right,
     chartHeight = 600 - chartMargin.top - chartMargin.bottom;
 
@@ -49,12 +49,12 @@ var chart = d3.select("#chart")
     .attr("transform", "translate(" + gridMargin.left + ", " + gridMargin.top + ")")
     .attr("class", "chart")
 
-chart.append("text")
+/*chart.append("text")
         .attr("x", (chartWidth / 2))
         .attr("y", 0 - (chartMargin.top / 4))
         .attr("text-anchor", "middle")
         .style("font-size", "40px")
-        .text("");
+        .text("");*/
 
 chart.append("path")
     .attr("class", "temperatureUncertainty")
@@ -269,6 +269,12 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         }
     }
 
+    d3.select("#main-section")
+        .classed("hidden", false)
+
+    d3.select(".preloader-background")
+        .remove()
+
     console.log("ringNumber", ringNumber)
     console.log("hexRadius", hexRadius)
 
@@ -307,7 +313,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .attr("y", (d, i) => rect_height * Math.floor(i / n))*/
         .attr("class", "countryBulb")
         .attr("id", d => d.country + "Bulb")
-        .attr("stroke", "none")
+        .attr("stroke", "#E5E5E5FF")
         .attr("fill", "white")
         .on('mouseover', function(d, i) {
             d3.select(this)
@@ -350,9 +356,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         		.duration(200)
         		.attr("d", line)
 
-            chart.select("text")
-                .text(data[clickedCountryIdx].country)
+            d3.select("#selectedCountry")
+                .html(data[clickedCountryIdx].country)
 
+            d3.select("#chart")
+                .classed("hidden", false)
         })
 
     //Modification de l'affichage de la grille à chaque frame

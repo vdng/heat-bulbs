@@ -18,51 +18,80 @@
 <body>
 
 <header>
-	<nav>
+	<nav class="red darken-4">
 	    <div class="container nav-container">
 	        <div class="nav-wrapper container-wide">
 	            <a href="#" class="brand-logo"><i class="material-icons">lightbulb_outline</i>Heat Bulbs</a>
+				<ul id="nav-mobile" class="right hide-on-med-and-down">
+					<li><a href="#">Project</a></li>
+					<li><a href="https://github.com/vdng/heat-bulbs">Git</a></li>
+				</ul>
 	        </div>
 	    </div>
 	</nav>
 </header>
 
+<div class="preloader-background">
+	<div class="preloader-wrapper big active">
+		<div class="spinner-layer spinner-red-only">
+			<div class="circle-clipper left">
+				<div class="circle"></div>
+			</div>
+			<div class="gap-patch">
+				<div class="circle"></div>
+			</div>
+			<div class="circle-clipper right">
+				<div class="circle"></div>
+			</div>
+		</div>
+	</div>
+</div>
 
 <main>
 	<div class="parallax-container">
 		<div class="parallax"><img src="images/thermometer.jpg" alt=""></div>
 	</div>
 
-	<div class="section">
 
-	<div class="row valign-wrapper">
+	<div id="main-section" class="section hidden">
 
-		<div class="col m6 s12 svg-container" id="grid">
+		<div class="row">
 
-			<div class="container">
-				<div class="row valign-wrapper">
-					<div class="col s2">
-	  					<a id="pause" class="btn-floating btn-large waves-effect waves-light red"><i class="material-icons">pause</i></a>
-					</div>
-					<div class="col s8">
-						<input id="slider" type="range" step="1" />
-					</div>
-					<div class="col s2">
-						<h3 id="year"></h3>
-					</div>
-				</div>		
+			<div class="col m5 offset-m1 s12">
+				<div class="container">
+					<div class="row valign-wrapper">
+						<div class="col s2">
+		  					<a id="pause" class="btn-floating btn-large waves-effect waves-light red darken-3>"><i class="material-icons">pause</i></a>
+						</div>
+						<div class="col s8">
+							<input id="slider" type="range" step="1" />
+						</div>
+						<div class="col s2">
+							<h3 id="year"></h3>
+						</div>
+					</div>		
+				</div>				
 			</div>
-			
-			
-		</div>
 
-		<div class="col m6 s12 svg-container" id="chart"></div>
-	</div>
+			<div class="col m5 s12">
+				<h3 class="center-align" id="selectedCountry"></h3>
+			</div>
+
+		</div>
+	
+		<div class="row">
+
+			<div class="col m5 offset-m1 s12 svg-container" id="grid">				
+				
+			</div>
+
+			<div class="col m5 s12 svg-container hidden" id="chart"></div>
+		</div>
 
 	</div>
 </main>
 
-<footer class="page-footer"></footer>
+<footer class="page-footer red darken-4"></footer>
 
 	<!-- Heat bulbs -->
 	<script src="heat_bulbs.js"></script>
