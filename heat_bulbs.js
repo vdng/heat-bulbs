@@ -4,19 +4,10 @@ var tooltip = d3.select("body").append("div")
     .attr("class", "hidden tooltip")
 var hoveredCountryIdx = 0;
 
-
 //Bouton de pause
 // ======
-var strButton = 'Pause';
+var strButton = 'pause';
 var buttonOnPlay = true;
-
-
-
-
-
-
-
-
 
 
 // Grille
@@ -401,7 +392,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             })
 
         // Affichage texte de l'année
-        d3.select('#year').html('Année : ' + (minYear + yearCount))
+        d3.select('#year').html(minYear + yearCount)
 
         let hoveredCountry = data[hoveredCountryIdx];
         tempToShow = hoveredCountry.currentYearAvailable ? showTemp(hoveredCountry.yearTemperatures[yearCount + minYear - hoveredCountry.minYear].value.temperature) : ""
@@ -460,11 +451,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     //Button
     // =======
-	d3.select('#pause').html(strButton)
-	d3.select('#pause')
+	/*d3.select('#pause').select("i").html(strButton)*/
+	d3.select('#pause').select("i")
 	.on('click', function() {
 		changeStatusButton();
-		d3.select('#pause').html(strButton)
+		d3.select('#pause').select("i").html(strButton)
 
 	})
 
@@ -473,11 +464,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     function changeStatusButton(){
 		if (buttonOnPlay){
 			buttonOnPlay = false;
-			strButton = 'Play'
+			strButton = 'play_arrow'
 			//clearInterval(evol);
 		} else {
 			buttonOnPlay = true;
-			strButton = 'Pause';
+			strButton = 'pause';
 			//evol;
 		}
 	}

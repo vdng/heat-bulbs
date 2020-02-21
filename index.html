@@ -33,21 +33,35 @@
 		<div class="parallax"><img src="images/thermometer.jpg" alt=""></div>
 	</div>
 
+	<div class="section">
+
 	<div class="row">
-		<div class="col s12">
-			<h2 id="year" class="center-align"></h2>
-			<button type="button" id = "pause" style="margin-left:auto;margin-right:auto;display:block;"></button>
+		<div class="col m6 s12 svg-container" id="grid">
+
+			<div class="container">
+				<div class="row valign-wrapper">
+					<div class="col s2">
+	  					<a id="pause" class="btn-floating btn-large waves-effect waves-light red"><i class="material-icons">pause</i></a>
+					</div>
+					<div class="col s8">
+						<!-- slider here -->
+					</div>
+					<div class="col s2">
+						<span id="year"></span>
+					</div>
+				</div>		
+			</div>
+			
+			
 		</div>
+
+		<div class="col m6 s12 svg-container" id="chart"></div>
 	</div>
 
-
-
-	<div class="row">
-		<div class="col m6 s12 svg-container" id="grid"></div>
-		<div class="col m5 s12 svg-container" id="chart"></div>
 	</div>
 </main>
 
+<footer class="page-footer"></footer>
 
 	<!-- Heat bulbs -->
 	<script src="heat_bulbs.js"></script>	
