@@ -14,7 +14,7 @@ div.tooltip {
     display: none;
 }
 
-.svg-container {
+/* .svg-container {
   display: inline-block;
   position: relative;
   width: 100%;
@@ -23,4 +23,4 @@ div.tooltip {
 .svg-content-responsive {
   display: inline-block;
   position: absolute;
-}
+} */
