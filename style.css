@@ -32,8 +32,12 @@ div.tooltip {
     height: 300px;
 }
 
-#year {
-    margin: none;
+h3 {
+    margin: 0;
+}
+
+.parallax img {
+    filter: blur(8px);
 }
 
 /* .svg-container {

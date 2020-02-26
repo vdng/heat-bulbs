@@ -17,8 +17,8 @@ var buttonOnPlay = true;
 // Grille
 // ======
 var gridMargin = { top: 20, right: 30, bottom: 50, left: 40 },
-    gridWidth = 900 - gridMargin.left - gridMargin.right,
-    gridHeight = 600 - gridMargin.top - gridMargin.bottom;
+    gridWidth = 600 - gridMargin.left - gridMargin.right,
+    gridHeight = 400 - gridMargin.top - gridMargin.bottom;
 
 var grid = d3.select("#grid")
     .append("svg")
@@ -37,8 +37,8 @@ var hexbin = d3.hexbin()
 // Chart
 // =====
 var chartMargin = { top: 20, right: 40, bottom: 50, left: 40 },
-	chartWidth = 900 - chartMargin.left - chartMargin.right,
-    chartHeight = 600 - chartMargin.top - chartMargin.bottom;
+	chartWidth = 600 - chartMargin.left - chartMargin.right,
+    chartHeight = 400 - chartMargin.top - chartMargin.bottom;
 
 var chart = d3.select("#chart")
 	.append("svg")
@@ -58,21 +58,14 @@ var chart = d3.select("#chart")
 
 chart.append("path")
     .attr("class", "temperatureUncertainty")
-    .attr("fill", "#ced")
+    .attr("fill", "#ffe0b2")
     .attr("stroke", "none")
 
 chart.append("path")
     .attr("class", "temperatureLine")
     .attr("fill", "none")
-    .attr("stroke", "#3ac")
+    .attr("stroke", "#ef6c00")
     .attr("stroke-width", 2)
-
-chart.append("circle")
-    .attr("class", "yearCircle")
-    .attr("r", 5)
-    .attr("fill", "grey")
-    .attr("stroke", "grey")
-    .attr("opacity", 0)
 
 chart.append("path")
     .attr("class", "yearLine")
@@ -81,10 +74,12 @@ chart.append("path")
     .attr("stroke-dasharray", "5,5")
     .attr("d", "M0 0" + " L0 " + chartHeight)
 
-
-
-
-
+chart.append("circle")
+    .attr("class", "yearCircle")
+    .attr("r", 5)
+    .attr("fill", "grey")
+    .attr("stroke", "grey")
+    .attr("opacity", 0)
 
 // Echelles
 // ========
@@ -137,8 +132,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     tempeartureScale.domain([minTemp, maxTemp]);
     yearScale.domain([minYear, maxYear]);
 
-    var xAxis = d3.axisBottom().scale(yearScale);
-    var yAxis = d3.axisLeft().scale(tempeartureScale);
+    var xAxis = d3.axisBottom().scale(yearScale).tickFormat(d => d);
+    var yAxis = d3.axisLeft().scale(tempeartureScale).ticks(5);
 
     chart.append("g")
         .attr("class", "x-axis")
@@ -158,6 +153,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .entries(data_csv)
 
     var countries = dataPerCountry.map(d => d.key);
+
+/*  document.addEventListener('DOMContentLoaded', function() {
+    var elems = document.querySelectorAll('#selectedCountry');
+    var instances = M.Autocomplete.init(elems, countries);
+  });*/
 
     console.log('countries', countries);
     console.log('dataPerCountry', dataPerCountry);
@@ -317,7 +317,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .attr("fill", "white")
         .on('mouseover', function(d, i) {
             d3.select(this)
-                .attr("stroke", "black")
+                .raise()
+                .attr("stroke", "#5B5B5B")
 
             tempToShow = d.currentYearAvailable ? showTemp(d.yearTemperatures[0].value.temperature) : ""
 
@@ -329,14 +330,24 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         })
         .on('mouseout', function(d, i) {
             tooltip.classed("hidden", true);
-            d3.select(this)
-                .attr("stroke", "#E5E5E5FF")
+
+            if (clickedCountryIdx != i) {
+                d3.select(this)
+                    .lower()
+                    .attr("stroke", "#E5E5E5FF")
+            }
         })
         .on('mousemove', function() {
             tooltip.attr("style", "left:" + (d3.event.pageX + 5) + "px; top:" + (d3.event.pageY - 60) + "px");
         })
         .on('click', function(d, i) {
         	clickedCountryIdx = i;
+
+            d3.selectAll(".countryBulb")
+                .attr("stroke", "#E5E5E5FF")
+
+            d3.select(this)
+                .attr("stroke", "black")
 
         	tempeartureScale.domain([d.minTemp, d.maxTemp])
         	chart.select(".y-axis")
@@ -357,6 +368,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         		.attr("d", line)
 
             d3.select("#selectedCountry")
+                /*.property("value", data[clickedCountryIdx].country)*/
                 .html(data[clickedCountryIdx].country)
 
             d3.select("#chart")
