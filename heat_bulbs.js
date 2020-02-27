@@ -150,12 +150,12 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     // Background canvas for quick drawing of 2k lines
     var canvas = d3.select("#drawScale").append("canvas")
-      .attr("width", 960)
+      .attr("width", 100)
       .attr("height", 500);
     var cty = canvas.node().getContext("2d");
     //Translucent svg on top to show the axis
     var drawscale = d3.select("#drawScale").append("svg")
-        .attr("width", 960)
+        .attr("width", 100)
       .attr("height", 500)
         .style("position", "fixed")
         .style("top", 0)
@@ -518,21 +518,27 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     function opacityWithLastRecord(d){
         var listYears = d.yearTemperatures
+        var nbAnneesNonVides = 0;
         if (!d.currentYearAvailable){
             return 1
         } else {
-            var maxTemp = 0;
+            var maxTemp = -50;
             var argMaxTemp = minYear;
             for (let i = minYear; i <= currentYear; i++){
                 var tempTest = d.yearTemperatures[i - d.minYear];
                 if (tempTest != undefined){
+                    nbAnneesNonVides++;
                     if (Number(tempTest.value.temperature) > maxTemp){
                         maxTemp = Number(tempTest.value.temperature);
                         argMaxTemp = i;
                     }
                 }
             }
-            return 1 - (currentYear-argMaxTemp)/rememberRecord;
+            if (nbAnneesNonVides >= 30){
+                return 1 - (currentYear-argMaxTemp)/rememberRecord;
+            } else {
+                return 0
+            }
                     
         }
     }
@@ -570,7 +576,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
 
     slider.on("input", function(val) {
-	      updateSlider(this.value);
+	       updateSlider(this.value);
+           if (buttonOnPlay){
+                changeStatusButton();
+                d3.select('#pause').select("i").html(strButton)
+           }
 	    })
 
     function updateSlider(value){
