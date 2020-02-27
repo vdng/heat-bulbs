@@ -104,6 +104,10 @@ var rememberRecord = 30;
 var tempToShow = "";
 var clickedCountryIdx = undefined;
 
+
+
+
+
 // Charger le fichier : il faudrait qu'on puisse charger différents fichiers et laisser l'utilisateur choisir s'il veut des villes ou des pays
 d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLandTemperaturesByCountry.csv", function(data_csv) {
 
@@ -113,6 +117,12 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     var parse = d3.timeParse("%Y-%m-%d");
     var minYear = 2000, maxYear = 0;
     var minTemp = 50, maxTemp = -50;
+
+
+
+
+
+
 
     data_csv.forEach(d => {
         d.dt = parse(d.dt);
@@ -136,6 +146,44 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     color.domain([minTemp, maxTemp]);
     tempeartureScale.domain([minTemp, maxTemp]);
     yearScale.domain([minYear, maxYear]);
+
+
+    // Background canvas for quick drawing of 2k lines
+    var canvas = d3.select("#drawScale").append("canvas")
+      .attr("width", 960)
+      .attr("height", 500);
+    var cty = canvas.node().getContext("2d");
+    //Translucent svg on top to show the axis
+    var drawscale = d3.select("#drawScale").append("svg")
+        .attr("width", 960)
+      .attr("height", 500)
+        .style("position", "fixed")
+        .style("top", 0)
+      .style("left", 0);
+
+
+    var yDrawScale = d3.scaleLinear().domain([50, -35]).range([20, 300]);
+
+    //Axe
+    drawscale.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(50, 0)")
+        .call(d3.axisLeft(yDrawScale));
+
+
+    d3.range(-35, 50, 0.00424)
+      .forEach(function (d) {
+            cty.beginPath();
+            cty.strokeStyle = color(d);
+            cty.moveTo(50,yDrawScale(d));
+            cty.lineTo(70,yDrawScale(d));      
+            cty.stroke();
+        });
+
+
+
+
+
 
     var xAxis = d3.axisBottom().scale(yearScale);
     var yAxis = d3.axisLeft().scale(tempeartureScale);
