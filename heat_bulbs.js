@@ -519,6 +519,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     function opacityWithLastRecord(d){
         var listYears = d.yearTemperatures
         var nbAnneesNonVides = 0;
+        var okShowTemp = false;
         if (!d.currentYearAvailable){
             return 1
         } else {
@@ -531,10 +532,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                     if (Number(tempTest.value.temperature) > maxTemp){
                         maxTemp = Number(tempTest.value.temperature);
                         argMaxTemp = i;
+                        okShowTemp = (nbAnneesNonVides >= 30);
                     }
                 }
             }
-            if (nbAnneesNonVides >= 30){
+            if (okShowTemp){
                 return 1 - (currentYear-argMaxTemp)/rememberRecord;
             } else {
                 return 0
