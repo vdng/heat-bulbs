@@ -1,3 +1,5 @@
+document.addEventListener('DOMContentLoaded', function() {
+
 // Tooltip
 // =======
 var tooltip = d3.select("body").append("div")
@@ -37,11 +39,11 @@ var hexbin = d3.hexbin()
 // Chart
 // =====
 var chartMargin = { top: 20, right: 40, bottom: 50, left: 40 },
-	chartWidth = 600 - chartMargin.left - chartMargin.right,
+    chartWidth = 600 - chartMargin.left - chartMargin.right,
     chartHeight = 400 - chartMargin.top - chartMargin.bottom;
 
 var chart = d3.select("#chart")
-	.append("svg")
+    .append("svg")
     .attr("preserveAspectRatio", "xMinYMin meet")
     .attr("viewBox", "0 0 " + (chartWidth + chartMargin.left + chartMargin.right) + " " + (chartHeight + chartMargin.top + chartMargin.bottom))
     .classed("svg-content-responsive", true)
@@ -102,8 +104,6 @@ var clickedCountryIdx = undefined;
 // Charger le fichier : il faudrait qu'on puisse charger différents fichiers et laisser l'utilisateur choisir s'il veut des villes ou des pays
 d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLandTemperaturesByCountry.csv", function(data_csv) {
 
-
-
     // Parse le temps : 1985-10-23
     var parse = d3.timeParse("%Y-%m-%d");
     var minYear = 2000, maxYear = 0;
@@ -144,9 +144,6 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .attr("class", "y-axis")
         .call(yAxis)
 
-    console.log('minYear', minYear, 'maxYear', maxYear);
-    console.log('minTemp', minTemp, 'maxTemp', maxTemp);
-
     // nest pour formater les données
     var dataPerCountry = d3.nest()
         .key(d => d.Country)
@@ -154,14 +151,27 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     var countries = dataPerCountry.map(d => d.key);
 
-/*  document.addEventListener('DOMContentLoaded', function() {
-    var elems = document.querySelectorAll('#selectedCountry');
-    var instances = M.Autocomplete.init(elems, countries);
-  });*/
+    // Autocomplete countries
+    function onTextInput(value) {
+        let i = countries.indexOf(value);
+        selectCountry(data[i], i);
+    }
 
-    console.log('countries', countries);
+    var elem = document.querySelector('.autocomplete');
+    var options = {
+        "onAutocomplete": () => onTextInput(elem.value)
+    }
+
+    var autocomplete = M.Autocomplete.init(elem, options);
+    var autocompleteData = {}
+
+    for (var i = 0; i < countries.length; i++) {
+        autocompleteData[countries[i]] = null;
+    }
+
+    autocomplete.updateData(autocompleteData);
+
     console.log('dataPerCountry', dataPerCountry);
-
 
     // TODO éventuellement : dynamique sur pas que les années mais aussi par saison ou autre période
     var tempPerCountryPerYear = d3.nest()
@@ -180,15 +190,13 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     var limitPerCountry = d3.nest()
         .key(d => d.Country)
         .rollup(d => { return { 'minYear': d3.min(d, v => v.dt.getFullYear()),
-        						'maxYear': d3.max(d, v => v.dt.getFullYear()),
-        						'minTemp': d3.min(d, v => v.AverageTemperature),
-        						'maxTemp': d3.max(d, v => v.AverageTemperature)
-        					  }
-        			  })
+                                'maxYear': d3.max(d, v => v.dt.getFullYear()),
+                                'minTemp': d3.min(d, v => v.AverageTemperature),
+                                'maxTemp': d3.max(d, v => v.AverageTemperature)
+                              }
+                      })
         .entries(data_csv)
 
-
-    console.log('limitPerCountry', limitPerCountry)
 
     // Création de la grille
     var n = Math.ceil(Math.sqrt(countries.length)); // Nombre de colonnes
@@ -199,7 +207,6 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     // Grille hexagonale
     var hexRadius = d3.min([gridWidth/((n + 0.5) * Math.sqrt(3)), gridHeight/((n + 1 / 3) * 1.5)]);
     hexbin.radius(hexRadius)
-    console.log("hexRadius", hexRadius)
 
     let ringNumber = 1;
 
@@ -251,7 +258,6 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             if (shiftedIdx >= numHexInRing / 2) x = - x;
 
             hexPosition = [x * Math.sqrt(3) * hexRadius, y * 1.5 * hexRadius]
-            console.log(countries[i], [x, y], i, idxInRing, shiftedIdx, tempIdx, numHexInRing, ringNumber)
         }
 
 
@@ -275,19 +281,14 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     d3.select(".preloader-background")
         .remove()
 
-    console.log("ringNumber", ringNumber)
-    console.log("hexRadius", hexRadius)
-
-    console.log('data', data);
-
     //console.log(maxPerCountry);
 
-	var line = d3.line()
-		.x(d => yearScale(d.key))
-		.y(d => tempeartureScale(d.value.temperature))
-		.curve(d3.curveCardinal);
+    var line = d3.line()
+        .x(d => yearScale(d.key))
+        .y(d => tempeartureScale(d.value.temperature))
+        .curve(d3.curveCardinal);
 
-	line.defined(d => d.value.temperature != null)
+    line.defined(d => d.value.temperature != null)
 
     var area = d3.area()
         .x(d => yearScale(d.key))
@@ -296,7 +297,6 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     area.defined(d => d.value.temperature != null)
 
-    console.log("hexbin", hexbin(data))
     //Grille par défaut
     grid.selectAll("path")
         .data(data)
@@ -312,7 +312,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .attr("x", (d, i) => rect_width * (i % n))
         .attr("y", (d, i) => rect_height * Math.floor(i / n))*/
         .attr("class", "countryBulb")
-        .attr("id", d => d.country + "Bulb")
+        .attr("id", (d, i) => "bulb-" + i)
         .attr("stroke", "#E5E5E5FF")
         .attr("fill", "white")
         .on('mouseover', function(d, i) {
@@ -340,40 +340,49 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .on('mousemove', function() {
             tooltip.attr("style", "left:" + (d3.event.pageX + 5) + "px; top:" + (d3.event.pageY - 60) + "px");
         })
-        .on('click', function(d, i) {
-        	clickedCountryIdx = i;
+        .on('click', selectCountry)
 
-            d3.selectAll(".countryBulb")
-                .attr("stroke", "#E5E5E5FF")
+   function selectCountry(d, i) {
+        if (i < 0) return;
+        clickedCountryIdx = i;
 
-            d3.select(this)
-                .attr("stroke", "black")
+        d3.selectAll(".countryBulb")
+            .attr("stroke", "#E5E5E5FF")
 
-        	tempeartureScale.domain([d.minTemp, d.maxTemp])
-        	chart.select(".y-axis")
-        		.transition()
-        		.duration(200)
-        		.call(yAxis)
+        d3.select("#bulb-" + i)
+            .raise()
+            .attr("stroke", "black")
 
-            chart.select(".temperatureUncertainty")
-                .data([d.yearTemperatures])
-                .transition()
-                .duration(200)
-                .attr("d", area)
+        tempeartureScale.domain([d.minTemp, d.maxTemp])
+        chart.select(".y-axis")
+            .transition()
+            .duration(200)
+            .call(yAxis)
 
-        	chart.select(".temperatureLine")
-        		.data([d.yearTemperatures])
-        		.transition()
-        		.duration(200)
-        		.attr("d", line)
+        chart.select(".temperatureUncertainty")
+            .data([d.yearTemperatures])
+            .transition()
+            .duration(200)
+            .attr("d", area)
 
-            d3.select("#selectedCountry")
-                /*.property("value", data[clickedCountryIdx].country)*/
-                .html(data[clickedCountryIdx].country)
+        chart.select(".temperatureLine")
+            .data([d.yearTemperatures])
+            .transition()
+            .duration(200)
+            .attr("d", line)
 
-            d3.select("#chart")
-                .classed("hidden", false)
-        })
+        d3.select("#selectedCountry")
+            .property("value", data[clickedCountryIdx].country)
+        /*.html(data[clickedCountryIdx].country)*/
+
+        d3.select("#chart")
+            .classed("hidden", false)
+    }
+
+    d3.select("#selectedCountry").on("input", function() {
+        onTextInput(this.value)
+    });
+
 
     //Modification de l'affichage de la grille à chaque frame
     var currentYear = minYear;
@@ -382,7 +391,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     var evol = setInterval(update, windowsDuration); // Durée d'affichage de chaque année
 
     function update() {
-    	// Parcours des pays pour voir si on dépasse le max
+        // Parcours des pays pour voir si on dépasse le max
         // Pour le moment, pas ouf : les premières frames affichent beaucoup d'ampoules allumées. C'est normal, il y a beaucoup de chances de casser son record quand on n'a peu de données : il faudrait pas commencer de la première année mais de la n-ème années en initialisant le max au max des 50 premières années
         //Bug à partir de 60 ans : trouver pourquoi
         for (var i = 0; i < countries.length; i++)
@@ -390,22 +399,22 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             if (data[i].minYear <= currentYear && !isNaN(data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature))
             {
                 data[i].currentYearAvailable = true;
-	            if (data[i].currentMax < data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature)
-	            { // Si on dépasse le max
-	                data[i].currentMax = data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature;
-	                if (buttonOnPlay){
-	                data[i].lastBeaten = 0;} // Conseil donné par Théo (pas moi, le doctorant) : faire le calcul du booléen maintenant et pas sur le moment de l'affichage
+                if (data[i].currentMax < data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature)
+                { // Si on dépasse le max
+                    data[i].currentMax = data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature;
+                    if (buttonOnPlay){
+                    data[i].lastBeaten = 0;} // Conseil donné par Théo (pas moi, le doctorant) : faire le calcul du booléen maintenant et pas sur le moment de l'affichage
 
-	            }
-	            else
-	            {	if (buttonOnPlay){
-	                data[i].lastBeaten += 1;}
-	            }
-	        }
+                }
+                else
+                {   if (buttonOnPlay){
+                    data[i].lastBeaten += 1;}
+                }
+            }
             else
             {
                 data[i].currentYearAvailable = false;
-	            if (buttonOnPlay){data[i].lastBeaten += 1;}
+                if (buttonOnPlay){data[i].lastBeaten += 1;}
             }
         }
 
@@ -448,15 +457,15 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             .duration(200)
             .attr("d", "M" + xyear + " 0" + " L" + xyear + " " + chartHeight)
 
-        if (clickedCountryIdx != undefined && data[clickedCountryIdx].currentYearAvailable)
+        if (clickedCountryIdx >= 0 && data[clickedCountryIdx].currentYearAvailable)
         {
-        	let clickedCountry = data[clickedCountryIdx];
-        	chart.select(".yearCircle")
-        		.transition()
-        		.duration(200)
+            let clickedCountry = data[clickedCountryIdx];
+            chart.select(".yearCircle")
+                .transition()
+                .duration(200)
                 .attr("opacity", 1)
-        		.attr("cx", yearScale(currentYear))
-        		.attr("cy", tempeartureScale(clickedCountry.yearTemperatures[currentYear - clickedCountry.minYear].value.temperature))
+                .attr("cx", yearScale(currentYear))
+                .attr("cy", tempeartureScale(clickedCountry.yearTemperatures[currentYear - clickedCountry.minYear].value.temperature))
         }
         else
         {
@@ -469,15 +478,15 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
 
         if (buttonOnPlay){
-        	currentYear++;
+            currentYear++;
 
           slider.property("value", currentYear);
           //console.log("Slider : ", slider);
         }
         if (currentYear == maxYear + 1 )
         {
-        	console.log("reset")
-        	currentYear = minYear;
+            //console.log("reset")
+            currentYear = minYear;
             for (var i = 0; i < countries.length; i++)
             {
                 data[i].currentMax = tempPerCountryPerYear[i].values[0].value.temperature;
@@ -514,27 +523,27 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     //Button
     // =======
-	/*d3.select('#pause').select("i").html(strButton)*/
-	d3.select('#pause').select("i")
-    	.on('click', function() {
-    		changeStatusButton();
-    		d3.select('#pause').select("i").html(strButton)
+    /*d3.select('#pause').select("i").html(strButton)*/
+    d3.select('#pause').select("i")
+        .on('click', function() {
+            changeStatusButton();
+            d3.select('#pause').select("i").html(strButton)
 
-    	})
+        })
 
 
 
     function changeStatusButton(){
-		if (buttonOnPlay){
-			buttonOnPlay = false;
-			strButton = 'play_arrow'
-			//clearInterval(evol);
-		} else {
-			buttonOnPlay = true;
-			strButton = 'pause';
-			//evol;
-		}
-	}
+        if (buttonOnPlay){
+            buttonOnPlay = false;
+            strButton = 'play_arrow'
+            //clearInterval(evol);
+        } else {
+            buttonOnPlay = true;
+            strButton = 'pause';
+            //evol;
+        }
+    }
 
 
   // Slider
@@ -542,15 +551,13 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
 
     slider.on("input", function(val) {
-	      updateSlider(this.value);
-	    })
+          updateSlider(this.value);
+        })
 
     function updateSlider(value){
         currentYear = Number(value);
         update();
     }
-
-
 
 })
 
@@ -558,3 +565,6 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 function showTemp(temp) {
     return Math.floor(10 * temp) / 10 + '°C'
 }
+
+});
+
