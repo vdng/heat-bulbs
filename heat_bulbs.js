@@ -151,34 +151,49 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     // Background canvas for quick drawing of 2k lines
     var canvas = d3.select("#drawScale").append("canvas")
       .attr("width", 100)
-      .attr("height", 500);
+      .attr("height", gridHeight);
     var cty = canvas.node().getContext("2d");
     //Translucent svg on top to show the axis
     var drawscale = d3.select("#drawScale").append("svg")
-        .attr("width", 100)
-      .attr("height", 500)
-        .style("position", "fixed")
+        .attr("width", 50)
+      .attr("height", gridHeight)
         .style("top", 0)
-      .style("left", 0);
+      .style("left", 50);
 
 
-    var yDrawScale = d3.scaleLinear().domain([50, -35]).range([20, 300]);
+    var yDrawScale = d3.scaleLinear().domain([50, -35]).range([20, gridHeight]);
+
+
+
+drawscale.append("text")             
+      .attr("transform",
+            "translate(0,10)")
+      .style("text-anchor", "middle")
+      .style('font-size','20px')
+      .text("T(°C)");
+
 
     //Axe
     drawscale.append("g")
         .attr("class", "axis")
-        .attr("transform", "translate(50, 0)")
-        .call(d3.axisLeft(yDrawScale));
+        .attr("transform", "translate(0, 0)")
+        .style('font-size','20px')
+        .call(d3.axisRight(yDrawScale));
+
+    
 
 
     d3.range(-35, 50, 0.00424)
       .forEach(function (d) {
             cty.beginPath();
             cty.strokeStyle = color(d);
-            cty.moveTo(50,yDrawScale(d));
-            cty.lineTo(70,yDrawScale(d));      
+            cty.moveTo(80,yDrawScale(d));
+            cty.lineTo(100,yDrawScale(d));      
             cty.stroke();
         });
+
+
+
 
 
 
@@ -192,6 +207,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .attr("class", "x-axis")
         .attr("transform", "translate(0, " + chartHeight + ")")
         .call(xAxis)
+
+
 
     chart.append("g")
         .attr("class", "y-axis")
@@ -447,12 +464,14 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                 //else return d3.color('white')
                 return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
             })
+
             .attr("fill-opacity", (d, i) => {
 
                 return opacityWithLastRecord(d);
                 //if (!d.currentYearAvailable) return 1;
                 //return d.lastBeaten < rememberRecord ? 1 - d.lastBeaten / rememberRecord : 0
             })
+            
 
         // Affichage texte de l'année
         d3.select('#year').html(currentYear)
@@ -527,7 +546,11 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             var argMaxTemp = minYear;
             for (let i = minYear; i <= currentYear; i++){
                 var tempTest = d.yearTemperatures[i - d.minYear];
-                if (tempTest != undefined){
+
+                if (d.country == 'Niger'){
+                    console.log("Temp:",tempTest)
+                }
+                if ( (tempTest != undefined) && (!isNaN(tempTest.value.temperature))) {
                     nbAnneesNonVides++;
                     if (Number(tempTest.value.temperature) > maxTemp){
                         maxTemp = Number(tempTest.value.temperature);
@@ -535,6 +558,9 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                         okShowTemp = (nbAnneesNonVides >= 30);
                     }
                 }
+            }
+            if (d.country == 'Niger'){
+                console.log("Nombre années non vides :",nbAnneesNonVides)
             }
             if (okShowTemp){
                 return 1 - (currentYear-argMaxTemp)/rememberRecord;
