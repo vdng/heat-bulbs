@@ -66,6 +66,13 @@ chart.append("path")
 
 // Barre verticale suivant l'année en cours
 chart.append("path")
+    .attr("class", "temperatureUndefined")
+    .attr("fill", "none")
+    .attr("stroke", "#ef6c00")
+    .attr("stroke-width", 1)
+    .attr("stroke-dasharray", "2, 2")
+
+chart.append("path")
     .attr("class", "yearLine")
     .attr("stroke", "black")
     .attr("stroke-width", 1)
@@ -340,6 +347,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     line.defined(d => d.value.temperature != null)
 
+
     var area = d3.area()
         .x(d => yearScale(d.key))
         .y0(d => temperatureScale(d.value.temperature - d.value.uncertainty))
@@ -414,6 +422,13 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             .attr("d", area)
 
         // Affichage de la température
+        var filteredData = d.yearTemperatures.filter(line.defined());
+
+        chart.select('.temperatureUndefined')
+            .transition()
+            .duration(200)        
+            .attr("d", line(filteredData))
+
         chart.select(".temperatureLine")
             .data([d.yearTemperatures])
             .transition()
