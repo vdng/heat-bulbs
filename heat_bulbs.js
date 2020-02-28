@@ -6,8 +6,9 @@ var tooltip = d3.select("body").append("div")
     .attr("class", "hidden tooltip")
 var hoveredCountryIdx = 0;
 
+
 //Bouton de pause
-// ======
+// ==============
 var strButton = 'pause';
 var buttonOnPlay = true;
 
@@ -15,6 +16,7 @@ var buttonOnPlay = true;
 // Slider
 // ======
  var slider = d3.select("#slider")
+
 
 // Grille
 // ======
@@ -32,9 +34,7 @@ var grid = d3.select("#grid")
     .attr("class", "grid")
 
 var hexbin = d3.hexbin()
-/*
-    .x(d => d.hex[0])
-    .y(d => d.hex[1])*/
+
 
 // Chart
 // =====
@@ -51,24 +51,20 @@ var chart = d3.select("#chart")
     .attr("transform", "translate(" + gridMargin.left + ", " + gridMargin.top + ")")
     .attr("class", "chart")
 
-/*chart.append("text")
-        .attr("x", (chartWidth / 2))
-        .attr("y", 0 - (chartMargin.top / 4))
-        .attr("text-anchor", "middle")
-        .style("font-size", "40px")
-        .text("");*/
-
+// Incertitude des températures
 chart.append("path")
     .attr("class", "temperatureUncertainty")
     .attr("fill", "#ffe0b2")
     .attr("stroke", "none")
 
+// Températures
 chart.append("path")
     .attr("class", "temperatureLine")
     .attr("fill", "none")
     .attr("stroke", "#ef6c00")
     .attr("stroke-width", 2)
 
+// Barre verticale suivant l'année en cours
 chart.append("path")
     .attr("class", "yearLine")
     .attr("stroke", "black")
@@ -76,6 +72,7 @@ chart.append("path")
     .attr("stroke-dasharray", "5,5")
     .attr("d", "M0 0" + " L0 " + chartHeight)
 
+// Rond suivant l'année en cours
 chart.append("circle")
     .attr("class", "yearCircle")
     .attr("r", 5)
@@ -85,40 +82,36 @@ chart.append("circle")
 
 // Echelles
 // ========
+
 // Grid: Couleur des températures
 var color = d3.scaleSequential().interpolator(d3.interpolateTurbo);
 
 // Chart: Axe Y des températures
-var tempeartureScale = d3.scaleLinear().range([chartHeight, 0]);
+var temperatureScale = d3.scaleLinear().range([chartHeight, 0]);
 
 // Chart: Axe X du temps
 var yearScale = d3.scaleLinear().range([0, chartWidth]);
 
 // Autres variables
 // ================
-var data = [];
-var rememberRecord = 30;
-var tempToShow = "";
-var clickedCountryIdx = undefined;
+var data = [];// Liste dans laquelle il y aura toutes les données
+var rememberRecord = 30; // Nombre d'années après le dernier record pour que la couleur d'un pays soit effacée
+var tempToShow = ""; //Température qui apparaîtra dans le tooltip du pays sélectionné
+var clickedCountryIdx = undefined; // Pays qu'on a sélectionné (en cliquant dessus ou avec la barre de recherche)
 
 
 
-
-
-// Charger le fichier : il faudrait qu'on puisse charger différents fichiers et laisser l'utilisateur choisir s'il veut des villes ou des pays
 d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLandTemperaturesByCountry.csv", function(data_csv) {
 
-    // Parse le temps : 1985-10-23
-    var parse = d3.timeParse("%Y-%m-%d");
+    
+    var parse = d3.timeParse("%Y-%m-%d"); 
+
+    // Initialisation des extrema de temps avant de les calculer
     var minYear = 2000, maxYear = 0;
     var minTemp = 50, maxTemp = -50;
 
 
-
-
-
-
-
+    // Calcul des extrema de température et d'années
     data_csv.forEach(d => {
         d.dt = parse(d.dt);
         let year = d.dt.getFullYear();
@@ -131,20 +124,23 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         if (temp > maxTemp) maxTemp = temp;
     })
 
+    // Initialisation du slider à partir des extrema calculés
     slider
         .attr("value", minYear)
         .attr("min", minYear)
         .attr("max", maxYear)
 
-    console.log("data_csv", data_csv);
-
+    // Définition des domaines pour les échelles
     color.domain([minTemp, maxTemp]);
-    tempeartureScale.domain([minTemp, maxTemp]);
+    temperatureScale.domain([minTemp, maxTemp]);
     yearScale.domain([minYear, maxYear]);
 
 
 
-    // Background canvas for quick drawing of 2k lines
+    // Echelle de couleurs
+    // ========
+
+    // Canva d'arrière-plan pour dessiner toutes les lignes de la légende de couleurs
     var canvas = d3.select("#legend")
         .append("canvas")
         .attr("width", 50)
@@ -152,7 +148,6 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     var cty = canvas.node().getContext("2d");
 
-    //Translucent svg on top to show the axis
     var drawscale = d3.select("#legend")
         .append("svg")
         .attr("width", 50)
@@ -162,18 +157,13 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     var yDrawScale = d3.scaleLinear().domain([maxTemp, minTemp]).range([0, gridHeight]);
 
-/*    drawscale.append("text")             
-        .attr("transform", "translate(0, 10)")
-        .style("text-anchor", "middle")
-        .style('font-size','20px')
-        .text("T(°C)");*/
-
-    //Axe
+    // Axe de  l'échelle de couleur
     drawscale.append("g")
         .attr("transform", "translate(0, 0)")
         .style('font-size','12px')
         .call(d3.axisRight(yDrawScale));
 
+    // Coloriage de l'échelle de couleurs
     d3.range(minTemp, maxTemp, 0.00424)
         .forEach(function (d) {
             cty.beginPath();
@@ -186,28 +176,33 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
 
 
+    // Axes de la courbe
+    // =======
     var xAxis = d3.axisBottom().scale(yearScale).tickFormat(d => d);
-    var yAxis = d3.axisLeft().scale(tempeartureScale).ticks(5);
+    var yAxis = d3.axisLeft().scale(temperatureScale).ticks(5);
 
     chart.append("g")
         .attr("class", "x-axis")
         .attr("transform", "translate(0, " + chartHeight + ")")
         .call(xAxis)
 
-
-
     chart.append("g")
         .attr("class", "y-axis")
         .call(yAxis)
 
-    // nest pour formater les données
+
+
+    // Nestpar pays pour formater les données p
     var dataPerCountry = d3.nest()
         .key(d => d.Country)
         .entries(data_csv)
 
+
     var countries = dataPerCountry.map(d => d.key);
 
+
     // Autocomplete countries
+    // ======================
     function onTextInput(value) {
         let i = countries.indexOf(value);
         selectCountry(data[i], i);
@@ -227,9 +222,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     autocomplete.updateData(autocompleteData);
 
-    console.log('dataPerCountry', dataPerCountry);
 
-    // TODO éventuellement : dynamique sur pas que les années mais aussi par saison ou autre période
+    // Nest des données par pays et par année
     var tempPerCountryPerYear = d3.nest()
         .key(d => d.Country)
         .key(d => d.dt.getFullYear())
@@ -241,8 +235,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                     })
         .entries(data_csv)
 
-    console.log('tempPerCountryPerYear', tempPerCountryPerYear);
 
+    // Calcul des extrema de dates et de températures pour chaque pays
     var limitPerCountry = d3.nest()
         .key(d => d.Country)
         .rollup(d => { return { 'minYear': d3.min(d, v => v.dt.getFullYear()),
@@ -254,13 +248,9 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .entries(data_csv)
 
 
-    // Création de la grille
+    // Création  de la grille hexagonale
+    // =================================
     var n = Math.ceil(Math.sqrt(countries.length)); // Nombre de colonnes
-    var square_length = Math.floor(gridWidth / n); // longueur d'un côté d'un carré de la grille
-    var rect_width = Math.floor(gridWidth / n);
-    var rect_height = Math.floor(gridHeight / n);
-
-    // Grille hexagonale
     var hexRadius = d3.min([gridWidth/((n + 0.5) * Math.sqrt(3)), gridHeight/((n + 1 / 3) * 1.5)]);
     hexbin.radius(hexRadius)
 
@@ -309,7 +299,6 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                 x = numHexInRing / 2 - tempIdx;
                 if (ringNumber % 2 != 0) x -= 0.5;
             }
-/*            if (ringNumber % 2 != 0 && tempIdx == rotation) x -= 0.5;*/ 
 
             if (shiftedIdx >= numHexInRing / 2) x = - x;
 
@@ -317,11 +306,14 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         }
 
 
+
+
+        // Rassemblement de toutes les données dans une même liste de dictionnaires
         data[i] = {
             "country": countries[i],
             "yearTemperatures": tempPerCountryPerYear[i].values,
             "currentMax": tempPerCountryPerYear[i].values[0].value.temperature,
-            "lastBeaten": rememberRecord,
+            //"lastBeaten": rememberRecord,
             "currentYearAvailable": false,
             "minYear": limitPerCountry[i].value.minYear,
             "maxYear": limitPerCountry[i].value.maxYear,
@@ -331,29 +323,31 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         }
     }
 
+
+    // Les données sont chargées, on peut afficher
     d3.select("#main-section")
         .classed("hidden", false)
 
     d3.select(".preloader-background")
         .remove()
 
-    //console.log(maxPerCountry);
+
 
     var line = d3.line()
         .x(d => yearScale(d.key))
-        .y(d => tempeartureScale(d.value.temperature))
+        .y(d => temperatureScale(d.value.temperature))
         .curve(d3.curveCardinal);
 
     line.defined(d => d.value.temperature != null)
 
     var area = d3.area()
         .x(d => yearScale(d.key))
-        .y0(d => tempeartureScale(d.value.temperature - d.value.uncertainty))
-        .y1(d => tempeartureScale(d.value.temperature + d.value.uncertainty))
+        .y0(d => temperatureScale(d.value.temperature - d.value.uncertainty))
+        .y1(d => temperatureScale(d.value.temperature + d.value.uncertainty))
 
     area.defined(d => d.value.temperature != null)
 
-    //Grille par défaut
+    // Grille par défaut
     grid.selectAll("path")
         .data(data)
         .enter()
@@ -363,20 +357,22 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .attr("id", (d, i) => "bulb-" + i)
         .attr("stroke", "#E5E5E5FF")
         .attr("fill", "white")
-        .on('mouseover', function(d, i) {
+        .on('mouseover', function(d, i) { // Passage de la souris sur un pays
             d3.select(this)
                 .raise()
                 .attr("stroke", "#5B5B5B")
 
+            // Récupération de la température du pays à afficher (par défaut la première)
             tempToShow = d.currentYearAvailable ? showTemp(d.yearTemperatures[0].value.temperature) : ""
 
+            // Affichage du Tooltip de température
             tooltip
                 .classed("hidden", false)
                 .html(countries[i] + '<br>' + tempToShow);
 
             hoveredCountryIdx = i;
         })
-        .on('mouseout', function(d, i) {
+        .on('mouseout', function(d, i) { // On recache le tooltip si on n'est sur aucun pays
             tooltip.classed("hidden", true);
 
             if (clickedCountryIdx != i) {
@@ -388,137 +384,142 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .on('mousemove', function() {
             tooltip.attr("style", "left:" + (d3.event.pageX + 5) + "px; top:" + (d3.event.pageY - 60) + "px");
         })
-        .on('click', selectCountry)
+        .on('click', selectCountry) // Sélection du pays pour afficher la courbe
 
+
+    // Sélection du pays pour afficher sa courbe
    function selectCountry(d, i) {
         if (i < 0) return;
         clickedCountryIdx = i;
 
         d3.selectAll(".countryBulb")
-            .attr("stroke", "#E5E5E5FF")
+            .attr("stroke", "#E5E5E5FF") 
 
-        d3.select("#bulb-" + i)
+        d3.select("#bulb-" + i) // On conserve un marqueur sur l'hexagone sélectionné
             .raise()
             .attr("stroke", "black")
 
-        tempeartureScale.domain([d.minTemp, d.maxTemp])
+        temperatureScale.domain([d.minTemp, d.maxTemp]) // Adaptation de l'échelle de températures sur la courbe
+        
         chart.select(".y-axis")
             .transition()
             .duration(200)
             .call(yAxis)
 
+        // Affichage de l'incertitude
         chart.select(".temperatureUncertainty")
             .data([d.yearTemperatures])
             .transition()
             .duration(200)
             .attr("d", area)
 
+        // Affichage de la température
         chart.select(".temperatureLine")
             .data([d.yearTemperatures])
             .transition()
             .duration(200)
             .attr("d", line)
 
-        d3.select("#country-input")
+        d3.select("#country-input") 
             .select("label")
             .classed("active", true)
 
-        d3.select("#selectedCountry")
+        d3.select("#selectedCountry") // Affichage du pays dans la barre de recherche
             .property("value", data[clickedCountryIdx].country)
 
-        d3.select("#chart")
+        d3.select("#chart") // Affichafe du chart
             .classed("hidden", false)
     }
 
+
+
+    // Barre de recherche
     d3.select("#selectedCountry").on("input", function() {
         onTextInput(this.value)
     });
 
 
-    //Modification de l'affichage de la grille à chaque frame
-    var currentYear = minYear;
+    // Modification de l'affichage de la grille à chaque frame
+    // =======================================================
+
+    var currentYear = minYear; // Année actuelle
 
     let windowsDuration = 100;
     var evol = setInterval(update, windowsDuration); // Durée d'affichage de chaque année
 
+
+    // Fonction de mise à jour de tout : grid, affichage de l'année, slider, courbe
+    // ============================================================================
     function update() {
-        // Parcours des pays pour voir si on dépasse le max
-        // Pour le moment, pas ouf : les premières frames affichent beaucoup d'ampoules allumées. C'est normal, il y a beaucoup de chances de casser son record quand on n'a peu de données : il faudrait pas commencer de la première année mais de la n-ème années en initialisant le max au max des 50 premières années
-        //Bug à partir de 60 ans : trouver pourquoi
+        // Parcours des pays pour voir si on dépasse le max du pays pendant cette année
+        // ============================================================================
         for (var i = 0; i < countries.length; i++)
         {
             if (data[i].minYear <= currentYear && !isNaN(data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature))
             {
-                data[i].currentYearAvailable = true;
+                data[i].currentYearAvailable = true; // On indique si l'annéeest disponible
                 if (data[i].currentMax < data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature)
-                { // Si on dépasse le max
+                { // Si on dépasse le max, on le met à jour
                     data[i].currentMax = data[i].yearTemperatures[currentYear - data[i].minYear].value.temperature;
-                    if (buttonOnPlay){
-                    data[i].lastBeaten = 0;} // Conseil donné par Théo (pas moi, le doctorant) : faire le calcul du booléen maintenant et pas sur le moment de l'affichage
-
-                }
-                else
-                {   if (buttonOnPlay){
-                    data[i].lastBeaten += 1;}
                 }
             }
             else
             {
                 data[i].currentYearAvailable = false;
-                if (buttonOnPlay){data[i].lastBeaten += 1;}
             }
         }
 
+        // Parcours des bulbs pour les colorier
+        // ====================================
         grid.selectAll(".countryBulb")
             .transition()
             .duration(windowsDuration)
-            .attr("fill-opacity", (d, i) => {
-                return opacityWithLastRecord(d);
-                //if (!d.currentYearAvailable) return 1;
-                //return d.lastBeaten < rememberRecord ? 1 - d.lastBeaten / rememberRecord : 0
+            .attr("fill-opacity", (d, i) => { //Contrôle de l'opacité
+                return opacityWithLastRecord(d); 
             })
-            .attr("fill", (d, i) => {
-                // Allumage ou pas de la case
-                if (!d.currentYearAvailable) return "#eee"
-                //if (d.lastBeaten < rememberRecord) return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
-                //else return d3.color('white')
-                else if (opacityWithLastRecord(d) > 0)
+            .attr("fill", (d, i) => { // Couleur à afficher
+                if (!d.currentYearAvailable) return "#eee" // Cas où on n'a pas de données
+                else if (opacityWithLastRecord(d) > 0) // Suite à un léger problème d'affichage, on contrôle d'abord si on est bien censé afficher la bulb 
                     return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
                 else
                     return "white"
             })            
 
-        // Affichage texte de l'année
+
+        // Affichage de l'année
+        // ====================
         d3.select('#year').html(currentYear)
 
+
+        // Pays sur lequel la souris est : affichage du tooltip
+        // ====================================================
         let hoveredCountry = data[hoveredCountryIdx];
         tempToShow = hoveredCountry.currentYearAvailable ? showTemp(hoveredCountry.yearTemperatures[currentYear - hoveredCountry.minYear].value.temperature) : ""
         tooltip.html(hoveredCountry.country + '<br>' + tempToShow);
-        /*            if (hoveredCountryIdx != undefined){
-                        var d = data[hoveredCountryIdx];
-                        var tempToShow = '';
-                                if (d.currentYearAvailable){
-                                    tempToShow = Math.floor(10 * d.yearTemperatures[currentYear]) / 10 + '°C';
-                                }
 
-                        tooltip.html(d.country+'<br>'+tempToShow);
-                    }*/
 
+
+        // Pays sélectionné
+        // ================
+
+        // Gestion de la ligne suivant l'année
         let xyear = yearScale(currentYear);
         chart.select(".yearLine")
             .transition()
             .duration(200)
             .attr("d", "M" + xyear + " 0" + " L" + xyear + " " + chartHeight)
 
+
+        // Gestion du rond suivant l'année
         if (clickedCountryIdx >= 0 && data[clickedCountryIdx].currentYearAvailable)
         {
             let clickedCountry = data[clickedCountryIdx];
-            chart.select(".yearCircle")
+            chart.select(".yearCircle") 
                 .transition()
                 .duration(200)
                 .attr("opacity", 1)
                 .attr("cx", yearScale(currentYear))
-                .attr("cy", tempeartureScale(clickedCountry.yearTemperatures[currentYear - clickedCountry.minYear].value.temperature))
+                .attr("cy", temperatureScale(clickedCountry.yearTemperatures[currentYear - clickedCountry.minYear].value.temperature))
         }
         else
         {
@@ -529,45 +530,48 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         }
 
 
-
+        // Mise à jour de l'année courante (y compris pour le slider)
         if (buttonOnPlay){
             currentYear++;
-
-          slider.property("value", currentYear);
-          //console.log("Slider : ", slider);
+            slider.property("value", currentYear); 
         }
-        if (currentYear == maxYear + 1 )
+
+        // On reprend à 0 une fois arrivé à la fin : on remet toutes les données à 0
+        if (currentYear == maxYear + 1)
         {
-            //console.log("reset")
             currentYear = minYear;
             for (var i = 0; i < countries.length; i++)
             {
                 data[i].currentMax = tempPerCountryPerYear[i].values[0].value.temperature;
-                data[i].lastBeaten = rememberRecord;
                 data[i].currentYearAvailable = false;
             }
         }
-    } // function update()
+    } 
 
 
+
+    // Fonction de calcul de l'opacité
+    // Opacité à 1 si on bat à record, puis décroissante
+    // =================================================
     function opacityWithLastRecord(d){
-        var listYears = d.yearTemperatures
-        var nbAnneesNonVides = 0;
-        var okShowTemp = false;
-        if (!d.currentYearAvailable){
-            return 1
+        var listYears = d.yearTemperatures // Liste des températures par année
+        var nbAnneesNonVides = 0; // Données disponibles avant l'année courante
+        var okShowTemp = false; // Booléen pour savoir si on affiche le record
+        if (!d.currentYearAvailable){ // Si il n'y a pas de donnée, on affiche en gris, l'opacité vaut 1
+            return 1 
         } else {
+            //Initialisaton du maximum de température et de l'année correspondante
             var maxTemp = -50;
             var argMaxTemp = minYear;
-            for (let i = minYear; i <= currentYear; i++){
-                var tempTest = d.yearTemperatures[i - d.minYear];
 
+            for (let i = minYear; i <= currentYear; i++){ // Parcours des années
+                var tempTest = d.yearTemperatures[i - d.minYear]; // Année du parcours
                 if ( (tempTest != undefined) && (!isNaN(tempTest.value.temperature))) {
-                    nbAnneesNonVides++;
-                    if (Number(tempTest.value.temperature) > maxTemp){
-                        maxTemp = Number(tempTest.value.temperature);
-                        argMaxTemp = i;
-                        okShowTemp = (nbAnneesNonVides >= 30);
+                    nbAnneesNonVides++; // On met à jour le nombre de données non vides précédant l'année courante
+                    if (Number(tempTest.value.temperature) > maxTemp){ // Si un record est battu
+                        maxTemp = Number(tempTest.value.temperature); // Mise jour du max
+                        argMaxTemp = i; // et de l'année
+                        okShowTemp = (nbAnneesNonVides >= 30); // Le record ne sera affiché que si on avait déjà rencontré assez de données avant l'établissement du record 
                     }
                 }
             }
@@ -583,46 +587,42 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
 
 
-    //Button
-    // =======
-    /*d3.select('#pause').select("i").html(strButton)*/
+    //Bouton de pause : click
+    // ======================
     d3.select('#pause').select("i")
         .on('click', function() {
             changeStatusButton();
             d3.select('#pause').select("i").html(strButton)
-
         })
 
 
-
+    // Fonction de l'événement de click sur le bouton de pause
+    // =======================================================
     function changeStatusButton(){
-        if (buttonOnPlay){
+        if (buttonOnPlay){ // Si on est en Play, on passe en Pause
             buttonOnPlay = false;
             strButton = 'play_arrow'
-            //clearInterval(evol);
-        } else {
+        } else { // Sinon, on passe en Play
             buttonOnPlay = true;
             strButton = 'pause';
-            //evol;
         }
     }
 
 
   // Slider
   // =======
-
-
     slider.on("input", function(val) {
-	       updateSlider(this.value);
-           if (buttonOnPlay){
+	       updateSlider(this.value); // Mise à jour du slider selon où on a cliqué
+           if (buttonOnPlay){ // Mise en pause si on touche au slider
                 changeStatusButton();
                 d3.select('#pause').select("i").html(strButton)
            }
 	    })
 
+    // Mise à jour du slider
     function updateSlider(value){
-        currentYear = Number(value);
-        update();
+        currentYear = Number(value); // L'année change
+        update(); // On met donc tout à jour
     }
 
 })
