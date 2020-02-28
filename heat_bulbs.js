@@ -142,52 +142,48 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     tempeartureScale.domain([minTemp, maxTemp]);
     yearScale.domain([minYear, maxYear]);
 
- /*   // Background canvas for quick drawing of 2k lines
-    var canvas = d3.select("#drawScale").append("canvas")
-      .attr("width", 100)
-      .attr("height", gridHeight);
-    var cty = canvas.node().getContext("2d");
-    //Translucent svg on top to show the axis
-    var drawscale = d3.select("#drawScale").append("svg")
+
+
+    // Background canvas for quick drawing of 2k lines
+    var canvas = d3.select("#legend")
+        .append("canvas")
         .attr("width", 50)
-      .attr("height", gridHeight)
-        .style("top", 0)
-      .style("left", 50);
+        .attr("height", gridHeight);
 
+    var cty = canvas.node().getContext("2d");
 
-    var yDrawScale = d3.scaleLinear().domain([50, -35]).range([20, gridHeight]);
+    //Translucent svg on top to show the axis
+    var drawscale = d3.select("#legend")
+        .append("svg")
+        .attr("width", 50)
+        .attr("height", gridHeight)
+        .style("position", "absolute")
+        .style("left", "40px")
 
+    var yDrawScale = d3.scaleLinear().domain([maxTemp, minTemp]).range([0, gridHeight]);
 
-
-drawscale.append("text")             
-      .attr("transform",
-            "translate(0,10)")
-      .style("text-anchor", "middle")
-      .style('font-size','20px')
-      .text("T(°C)");
-
+/*    drawscale.append("text")             
+        .attr("transform", "translate(0, 10)")
+        .style("text-anchor", "middle")
+        .style('font-size','20px')
+        .text("T(°C)");*/
 
     //Axe
     drawscale.append("g")
-        .attr("class", "axis")
         .attr("transform", "translate(0, 0)")
-        .style('font-size','20px')
+        .style('font-size','12px')
         .call(d3.axisRight(yDrawScale));
 
-    
-
-
-    d3.range(-35, 50, 0.00424)
-      .forEach(function (d) {
+    d3.range(minTemp, maxTemp, 0.00424)
+        .forEach(function (d) {
             cty.beginPath();
             cty.strokeStyle = color(d);
-            cty.moveTo(80,yDrawScale(d));
-            cty.lineTo(100,yDrawScale(d));      
+            cty.moveTo(10, yDrawScale(d));
+            cty.lineTo(30, yDrawScale(d));      
             cty.stroke();
         });
 
 
-*/
 
 
     var xAxis = d3.axisBottom().scale(yearScale).tickFormat(d => d);
@@ -563,9 +559,6 @@ drawscale.append("text")
             for (let i = minYear; i <= currentYear; i++){
                 var tempTest = d.yearTemperatures[i - d.minYear];
 
-                if (d.country == 'Niger'){
-                    console.log("Temp:",tempTest)
-                }
                 if ( (tempTest != undefined) && (!isNaN(tempTest.value.temperature))) {
                     nbAnneesNonVides++;
                     if (Number(tempTest.value.temperature) > maxTemp){
@@ -574,9 +567,6 @@ drawscale.append("text")
                         okShowTemp = (nbAnneesNonVides >= 30);
                     }
                 }
-            }
-            if (d.country == 'Niger'){
-                console.log("Nombre années non vides :",nbAnneesNonVides)
             }
             if (okShowTemp){
                 return 1 - (currentYear-argMaxTemp)/rememberRecord;
