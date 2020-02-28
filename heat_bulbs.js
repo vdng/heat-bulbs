@@ -101,6 +101,10 @@ var rememberRecord = 30;
 var tempToShow = "";
 var clickedCountryIdx = undefined;
 
+
+
+
+
 // Charger le fichier : il faudrait qu'on puisse charger différents fichiers et laisser l'utilisateur choisir s'il veut des villes ou des pays
 d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLandTemperaturesByCountry.csv", function(data_csv) {
 
@@ -108,6 +112,12 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     var parse = d3.timeParse("%Y-%m-%d");
     var minYear = 2000, maxYear = 0;
     var minTemp = 50, maxTemp = -50;
+
+
+
+
+
+
 
     data_csv.forEach(d => {
         d.dt = parse(d.dt);
@@ -132,6 +142,58 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     tempeartureScale.domain([minTemp, maxTemp]);
     yearScale.domain([minYear, maxYear]);
 
+    // Background canvas for quick drawing of 2k lines
+    var canvas = d3.select("#drawScale").append("canvas")
+      .attr("width", 100)
+      .attr("height", gridHeight);
+    var cty = canvas.node().getContext("2d");
+    //Translucent svg on top to show the axis
+    var drawscale = d3.select("#drawScale").append("svg")
+        .attr("width", 50)
+      .attr("height", gridHeight)
+        .style("top", 0)
+      .style("left", 50);
+
+
+    var yDrawScale = d3.scaleLinear().domain([50, -35]).range([20, gridHeight]);
+
+
+
+drawscale.append("text")             
+      .attr("transform",
+            "translate(0,10)")
+      .style("text-anchor", "middle")
+      .style('font-size','20px')
+      .text("T(°C)");
+
+
+    //Axe
+    drawscale.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(0, 0)")
+        .style('font-size','20px')
+        .call(d3.axisRight(yDrawScale));
+
+    
+
+
+    d3.range(-35, 50, 0.00424)
+      .forEach(function (d) {
+            cty.beginPath();
+            cty.strokeStyle = color(d);
+            cty.moveTo(80,yDrawScale(d));
+            cty.lineTo(100,yDrawScale(d));      
+            cty.stroke();
+        });
+
+
+
+
+
+
+
+
+
     var xAxis = d3.axisBottom().scale(yearScale).tickFormat(d => d);
     var yAxis = d3.axisLeft().scale(tempeartureScale).ticks(5);
 
@@ -139,6 +201,8 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         .attr("class", "x-axis")
         .attr("transform", "translate(0, " + chartHeight + ")")
         .call(xAxis)
+
+
 
     chart.append("g")
         .attr("class", "y-axis")
@@ -421,6 +485,12 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
         grid.selectAll(".countryBulb")
             .transition()
             .duration(windowsDuration)
+            .attr("fill-opacity", (d, i) => {
+
+                return opacityWithLastRecord(d);
+                //if (!d.currentYearAvailable) return 1;
+                //return d.lastBeaten < rememberRecord ? 1 - d.lastBeaten / rememberRecord : 0
+            })
             .attr("fill", (d, i) => {
                 // Allumage ou pas de la case
                 if (!d.currentYearAvailable) return "#eee"
@@ -428,12 +498,14 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
                 //else return d3.color('white')
                 return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
             })
+
             .attr("fill-opacity", (d, i) => {
 
                 return opacityWithLastRecord(d);
                 //if (!d.currentYearAvailable) return 1;
                 //return d.lastBeaten < rememberRecord ? 1 - d.lastBeaten / rememberRecord : 0
             })
+            
 
         // Affichage texte de l'année
         d3.select('#year').html(currentYear)
@@ -499,21 +571,36 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
     function opacityWithLastRecord(d){
         var listYears = d.yearTemperatures
+        var nbAnneesNonVides = 0;
+        var okShowTemp = false;
         if (!d.currentYearAvailable){
             return 1
         } else {
-            var maxTemp = 0;
+            var maxTemp = -50;
             var argMaxTemp = minYear;
             for (let i = minYear; i <= currentYear; i++){
                 var tempTest = d.yearTemperatures[i - d.minYear];
-                if (tempTest != undefined){
+
+                if (d.country == 'Niger'){
+                    console.log("Temp:",tempTest)
+                }
+                if ( (tempTest != undefined) && (!isNaN(tempTest.value.temperature))) {
+                    nbAnneesNonVides++;
                     if (Number(tempTest.value.temperature) > maxTemp){
                         maxTemp = Number(tempTest.value.temperature);
                         argMaxTemp = i;
+                        okShowTemp = (nbAnneesNonVides >= 30);
                     }
                 }
             }
-            return 1 - (currentYear-argMaxTemp)/rememberRecord;
+            if (d.country == 'Niger'){
+                console.log("Nombre années non vides :",nbAnneesNonVides)
+            }
+            if (okShowTemp){
+                return 1 - (currentYear-argMaxTemp)/rememberRecord;
+            } else {
+                return 0
+            }
                     
         }
     }
@@ -551,8 +638,12 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
 
 
     slider.on("input", function(val) {
-          updateSlider(this.value);
-        })
+	       updateSlider(this.value);
+           if (buttonOnPlay){
+                changeStatusButton();
+                d3.select('#pause').select("i").html(strButton)
+           }
+	    })
 
     function updateSlider(value){
         currentYear = Number(value);
