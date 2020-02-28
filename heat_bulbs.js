@@ -419,9 +419,12 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
             .duration(200)
             .attr("d", line)
 
+        d3.select("#country-input")
+            .select("label")
+            .classed("active", true)
+
         d3.select("#selectedCountry")
             .property("value", data[clickedCountryIdx].country)
-        /*.html(data[clickedCountryIdx].country)*/
 
         d3.select("#chart")
             .classed("hidden", false)
