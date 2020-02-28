@@ -142,7 +142,7 @@ d3.csv("https://raw.githubusercontent.com/vdng/heat-bulbs/dev-vincent/GlobalLand
     tempeartureScale.domain([minTemp, maxTemp]);
     yearScale.domain([minYear, maxYear]);
 
-    // Background canvas for quick drawing of 2k lines
+ /*   // Background canvas for quick drawing of 2k lines
     var canvas = d3.select("#drawScale").append("canvas")
       .attr("width", 100)
       .attr("height", gridHeight);
@@ -187,11 +187,7 @@ drawscale.append("text")
         });
 
 
-
-
-
-
-
+*/
 
 
     var xAxis = d3.axisBottom().scale(yearScale).tickFormat(d => d);
@@ -367,14 +363,6 @@ drawscale.append("text")
         .enter()
         .append("path")
         .attr("d", function(d) { return "M" + d.hex[0] + "," + d.hex[1] + hexbin.hexagon(); })
-/*    grid.selectAll("rect")
-        .data(data)
-        .enter()
-        .append("rect")
-        .attr("width", rect_width)
-        .attr("height", rect_height)
-        .attr("x", (d, i) => rect_width * (i % n))
-        .attr("y", (d, i) => rect_height * Math.floor(i / n))*/
         .attr("class", "countryBulb")
         .attr("id", (d, i) => "bulb-" + i)
         .attr("stroke", "#E5E5E5FF")
@@ -486,7 +474,6 @@ drawscale.append("text")
             .transition()
             .duration(windowsDuration)
             .attr("fill-opacity", (d, i) => {
-
                 return opacityWithLastRecord(d);
                 //if (!d.currentYearAvailable) return 1;
                 //return d.lastBeaten < rememberRecord ? 1 - d.lastBeaten / rememberRecord : 0
@@ -496,16 +483,11 @@ drawscale.append("text")
                 if (!d.currentYearAvailable) return "#eee"
                 //if (d.lastBeaten < rememberRecord) return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
                 //else return d3.color('white')
-                return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
-            })
-
-            .attr("fill-opacity", (d, i) => {
-
-                return opacityWithLastRecord(d);
-                //if (!d.currentYearAvailable) return 1;
-                //return d.lastBeaten < rememberRecord ? 1 - d.lastBeaten / rememberRecord : 0
-            })
-            
+                else if (opacityWithLastRecord(d) > 0)
+                    return color(Number(d.yearTemperatures[currentYear - d.minYear].value.temperature))
+                else
+                    return "white"
+            })            
 
         // Affichage texte de l'année
         d3.select('#year').html(currentYear)
@@ -658,4 +640,3 @@ function showTemp(temp) {
 }
 
 });
-
